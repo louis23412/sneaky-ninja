@@ -1,0 +1,16 @@
+{
+  "name": "price_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sneaky-ninja.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dsteem": "^0.11.3",
+    "event-stream": "^4.0.1",
+    "steem": "^0.7.10"
+  }
+}
