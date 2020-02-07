@@ -8,5 +8,7 @@
     "PROFITMIN" : 0.001,
     "MAXVOTERS" : 5,
     "MINREP" : 35,
-    "MAXACTIVEPOSTS" : 7
+    "MAXACTIVEPOSTS" : 7,
+    "MINAVGCOMMENT" : 0.2,
+    "COMMENTBUFFER" : 0.5
 }

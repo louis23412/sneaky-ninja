@@ -15,6 +15,8 @@ const main = async () => {
     let totalCuration = 0
     const totalVotes = dataList.length - 1
     let counter = 0
+    let Biggest = 0
+    let BiggestLink
 
     await steem.api.getOrderBook(10, function(err, result) {
         const sbdToSteemPrice = result.bids[0].real_price
@@ -47,6 +49,11 @@ const main = async () => {
     
                     const pctOwned = rshares / totalRShares
                     const sbdCuration = curatorPayout * pctOwned
+                    
+                    if (sbdCuration > Biggest) {
+                        Biggest = sbdCuration
+                        BiggestLink = linkOnly
+                    }
                     totalCuration += sbdCuration
         
                     console.log(`(\x1b[33m${counter}\x1b[0m / \x1b[33m${totalVotes}\x1b[0m) ==> LINK: \x1b[33m${linkOnly}\x1b[0m`)
@@ -56,7 +63,7 @@ const main = async () => {
                 }
 
                 if (counter === totalVotes) {
-                    console.log(`Total Sbd-Curation: \x1b[33m${totalCuration}\x1b[0m -- Total STEEM-Curation: \x1b[33m${totalCuration / sbdToSteemPrice}\x1b[0m -- AVG: ${(totalCuration / sbdToSteemPrice) / counter}`)
+                    console.log(`Total Sbd-Curation: \x1b[33m${totalCuration}\x1b[0m -- Total STEEM-Curation: \x1b[33m${totalCuration / sbdToSteemPrice}\x1b[0m -- AVG: \x1b[33m${(totalCuration / sbdToSteemPrice) / counter}\x1b[0m -- Biggest payout in SBD: \x1b[33m${Biggest}\x1b[0m => STEEM: \x1b[33m${Biggest / sbdToSteemPrice}\x1b[0m => LINK: \x1b[33m${BiggestLink}\x1b[0m`)
                 }
             }
         })

@@ -15,16 +15,31 @@ const {
     MINVOTINGPOWER,
     VOTEWEIGHT,
     KEY,
-    MINPOSTAGE,
     MINAVGVALUE,
     PROFITMIN,
     MAXVOTERS, 
     MINREP, 
-    MAXACTIVEPOSTS
+    MAXACTIVEPOSTS,
+    MINAVGCOMMENT,
+    COMMENTBUFFER
 } = globalProps;
 
-//Helper functions:
-// ---------------------------------
+
+// Seperation of concerns!
+// -------------------------------------------
+const yt = (txt) => {
+    return `\x1b[33m${txt}\x1b[0m`
+}
+
+const rt = (txt) => {
+    return `\x1b[31m${txt}\x1b[0m`
+}
+
+const gt = (txt) => {
+    return `\x1b[32m${txt}\x1b[0m`
+}
+
+
 const round = (value, decimals) => {
     return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
@@ -41,42 +56,100 @@ const Quartile = (arr, q) => {
         return sorted[base];
     }
 };
-// ----------------------------------
-const startTime = new Date()
 
+const calculateProfit = (arr, avgval) => {
+    const q1 = Quartile(arr, 0.25);
+    const q2 = Quartile(arr, 0.5);
+    const q3 = Quartile(arr, 0.75);
+    const diff = ((q1 + q2 + q3) / 3) - avgval
+    let percentile = round((diff / avgval) * 100, 3)
+    if (isNaN(percentile)) {
+        percentile = 0;
+    }
+    return percentile
+}
+
+const wif = steem.auth.toWif(USERNAME, KEY, 'posting');
+const voteNow = (author, postperm, link, age, blockid, type) => {
+    let buffer = 1
+    if (type === 'comment') {
+        buffer = COMMENTBUFFER
+    }
+    steem.broadcast.vote(wif, USERNAME, author, postperm, VOTEWEIGHT * buffer, function(err, result) {
+        if (err) {
+            if (type === 'post') {
+                errors++
+            } else if (type === 'comment') {
+                commentErrors++
+            } else if (type === 'frontrun') {
+                fr_errors++
+            }
+            console.log(err)
+            fs.appendFileSync('./errorlog.txt', `\n${err}`)
+        } else {
+            if (type === 'post') {
+                votes++
+            } else if (type === 'comment') {
+                commentVotes++
+            } else if (type === 'frontrun') {
+                fr_votes++
+            }
+            console.log(gt('Vote Success!'));
+            fs.appendFileSync('./log.txt', `\nAUTHOR: ${author} -- LINK: ${link} -- DATE: ${new Date()} -- VOTED AFTER: ${age} mins -- Block-Id: ${blockid}\n---------------------------`)
+        }
+    });
+}
+// -------------------------------------------
+
+//Runtime variables:
+const startTime = new Date()
+let blockCounter = 0
+let tracker = []
+let commentTracker = []
+let votes = 0
+let fr_votes = 0
+let inspections = 0
+let commentInspections = 0
+let commentErrors = 0
+let commentVotes = 0
+let errors = 0
+let fr_errors = 0
+let frontRuns = 0
+
+console.clear()
+console.log('Starting up block stream...')
 //Main function:
 async function mainBot() {
-    let tracker = []
-    let votes = 0
-    let fr_votes = 0
-    let inspections = 0
-    let errors = 0
-    let fr_errors = 0
-    let frontRuns = 0
-
     stream.pipe(es.map(async function(block, callback) {
+        callback(null, util.inspect(block, {colors: true, depth: null}) + '\n')
+
         let votingData = await rcapi.getVPMana(USERNAME)
         let votingPower = votingData.percentage / 100
 
-        let voteStatus = `\x1b[31mRecharging Steem Power...\x1b[0m`
+        let voteStatus = rt(`Recharging Steem Power...`)
         if (votingPower >= MINVOTINGPOWER) {
-            voteStatus = '\x1b[32mOnline!\x1b[0m'
+            voteStatus = gt('Online!')
         }
 
         const displayTracker = tracker.map(user => {
-            return `\x1b[33m@${user}\x1b[0m`
+            return yt(`@${user}`)
         })
 
-        callback(null, util.inspect(block, {colors: true, depth: null}) + '\n')
+        const commentDisplayTracker = commentTracker.map(user => {
+            return yt(`@${user}`)
+        })
+
         const data = block.transactions
         const blockId = block.block_id
+        blockCounter ++ 
 
-        console.log(`Run-time: \x1b[33m${round((new Date() - startTime) / 1000 / 60, 2)}mins\x1b[0m | Block-ID: \x1b[33m${blockId}\x1b[0m`)
-        console.log(`Status: ${voteStatus} | Votes logged: \x1b[33m${votes}\x1b[0m | Vote fails logged: \x1b[33m${errors}\x1b[0m`)
-        console.log(`Completed-Inspections: \x1b[33m${inspections}\x1b[0m | Pending inspections: \x1b[33m${tracker.length}\x1b[0m ==> [ ${  displayTracker} ]`)
-        console.log(`Front-Runs Detected: \x1b[33m${frontRuns}\x1b[0m | Front-Runs Voted: \x1b[33m${fr_votes}\x1b[0m | Front-Runs Vote Fails: \x1b[33m${fr_errors}\x1b[0m`)
-        console.log(`Current-VP: \x1b[33m${votingPower}%\x1b[0m | Min-VP: \x1b[33m${MINVOTINGPOWER}%\x1b[0m | Vote Weight: \x1b[33m${VOTEWEIGHT / 100}%\x1b[0m`)
-        console.log('\x1b[33m-----------------------------------\x1b[0m')
+        console.log(`Status: ${voteStatus} || Run-time: ${yt(round((new Date() - startTime) / 1000 / 60, 2) + ' mins')} || ${yt(blockCounter)} blocks inspected!`)
+        console.log(`Current-VP: ${yt(votingPower + '%')} || Block-ID: ${yt(blockId)}`)
+        console.log(`Post Votes: ${yt(votes)} || Comment Votes: ${yt(commentVotes)} || Front-Run Votes: ${yt(fr_votes)} || Front-Runs Detected: ${yt(frontRuns)}`)
+        console.log(`Post Vote fails: ${yt(errors)} || Comment Vote fails: ${yt(commentErrors)} || Front-Runs Vote Fails: ${yt(fr_errors)}`)
+        console.log(`Post-Inspections: ${yt(inspections)} || Pending Post inspections: ${yt(tracker.length)} ==> [${displayTracker}]`)
+        console.log(`Comment-Inspections: ${yt(commentInspections)} || Pending Comment inspections: ${yt(commentTracker.length)} ==> [${commentDisplayTracker}]`)
+        console.log(yt('-----------------------------------'))
     
         data.forEach(async trans => {
             const operations = trans.operations
@@ -122,24 +195,17 @@ async function mainBot() {
                     avgValue = 0.000
                 }
 
-                const q1 = Quartile(valueData, 0.25);
-                const q2 = Quartile(valueData, 0.5);
-                const q3 = Quartile(valueData, 0.75);
-                const diff = ((q1 + q2 + q3) / 3) - avgValue
-                let percentile = round((diff / avgValue) * 100, 3)
-                if (isNaN(percentile)) {
-                    percentile = 0;
-                }
+                const percentile = calculateProfit(valueData, avgValue);
 
-                //&& minuteDiff < MINPOSTAGE
                 if (authorRep >= MINREP && postCount <= MAXACTIVEPOSTS
                     && avgValue >= MINAVGVALUE && percentile >= PROFITMIN && votingPower >= MINVOTINGPOWER 
                     && currentVoters <= MAXVOTERS ) {
                     tracker.push(author)
-                    console.log(`In block: \x1b[33m${blockId}\x1b[0m | Match #: \x1b[33m${tracker.length}\x1b[0m`)
-                    console.log(`Post age: \x1b[33m${round(minuteDiff, 2)}\x1b[0m mins | Current Voters: \x1b[33m${currentVoters}\x1b[0m`)
-                    console.log(`Author: \x1b[33m${author}\x1b[0m -- Reputation: \x1b[33m${authorRep}\x1b[0m -- Active-posts: \x1b[33m${postCount}\x1b[0m -- Avg-post-value: \x1b[33m${round(avgValue, 3)}\x1b[0m -- Chance for profit: \x1b[33m${percentile}%\x1b[0m`)
-                    console.log(`Post-link: \x1b[33m${link}\x1b[0m`)
+                    console.log('Post Detected!')
+                    console.log(`In block: ${yt(blockId)} | Match #: ${yt(tracker.length)}`)
+                    console.log(`Post age: ${yt(round(minuteDiff, 2) + ' mins')} | Current Voters: ${yt(currentVoters)}`)
+                    console.log(`Author: ${yt(author)} -- Reputation: ${yt(authorRep)} -- Active-posts: ${yt(postCount)} -- Avg-post-value: ${yt(round(avgValue, 3))} -- Chance for profit: ${yt(percentile + '%')}`)
+                    console.log(`Post-link: ${yt(link)}`)
 
                     const scheduleTime = 240000 - ((minuteDiff * 60) * 1000)
 
@@ -165,39 +231,36 @@ async function mainBot() {
                                 const postValue = Number(newPostDetails.pending_payout_value.replace(' SBD', ''))
                                 const totalVoters = newPostDetails.active_votes.length
 
-                                console.log(`Inspection time for \x1b[33m@${author}!\x1b[0m`)
-                                console.log(`POST-AGE: \x1b[33m${round(newMinuteDiff, 2)}\x1b[0m -- VALUE: \x1b[33m${postValue}\x1b[0m -- VOTERS: \x1b[33m${totalVoters}\x1b[0m`)
+                                console.log(`Inspection time for ${yt('@' + author)}!`)
+                                console.log(`POST-AGE: ${yt(round(newMinuteDiff, 2))} -- VALUE: ${yt(postValue)} -- VOTERS: ${yt(totalVoters)}`)
 
-                                if (totalVoters <= MAXVOTERS && (postValue / avgValue) <= 0.10) {
+                                let votesignal = true
+                                newPostDetails.active_votes.forEach(voter => {
+                                    if (voter.voter === USERNAME){
+                                        votesignal = false
+                                    }
+                                })
+
+                                if (totalVoters <= MAXVOTERS && (postValue / avgValue) <= 0.10 && votesignal === true) {
                                     const linkList = link.split('/')
                                     const postPerm = linkList[linkList.length -1]
-                                    console.log(`\x1b[32mVOTE OPPORTUNITY DETECTED! Broadcasting now...\x1b[0m`)
+                                    console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now...`))
                                     console.log(`---------------------`)
-
-                                    const wif = steem.auth.toWif(USERNAME, KEY, 'posting');
-                                    steem.broadcast.vote(wif, USERNAME, author, postPerm, VOTEWEIGHT, function(err, result) {
-                                        if (err) {
-                                            errors += 1
-                                            console.log(err)
-                                            fs.appendFileSync('./errorlog.txt', `\n${err}`)
-                                        } else {
-                                            votes += 1
-                                            console.log('\x1b[32mVote Success!\x1b[0m');
-                                            fs.appendFileSync('./log.txt', `\nAUTHOR: ${author} -- LINK: ${link} -- DATE: ${new Date()} -- VOTED AFTER: ${newMinuteDiff} mins -- Block-Id: ${blockId}\n---------------------------`)
-                                        }
-                                    });
+                                    voteNow(author, postPerm, link, newMinuteDiff, blockId, 'post');
+                                } else if (votesignal === false) {
+                                    console.log(rt(`Already voted here!`))
                                 } else {
-                                    console.log(`\x1b[31mNot profitable to vote! =(\x1b[0m`)
+                                    console.log(rt(`Not profitable to vote! =(`))
                                     console.log(`---------------------`)
                                 }
                             } else {
-                                console.log(`Inspection time for \x1b[33m@${author}!\x1b[0m`)
-                                console.log(`\x1b[31mVoting power is currently too low to inspect this post! (${round(votingPower - MINVOTINGPOWER, 2)})\x1b[0m`)
+                                console.log(`Inspection time for ${yt('@' + author)}!`)
+                                console.log(rt(`Voting power is currently too low to inspect this post! (${round(votingPower - MINVOTINGPOWER, 2)})`))
                                 console.log(`---------------------`)
                             }
                         }, scheduleTime)
                     })
-                    console.log(`Scheduled inspection for \x1b[33m${round(scheduleTime / 1000, 2)}secs\x1b[0m from now...`)
+                    console.log(`Scheduled inspection for ${yt(round(scheduleTime / 1000, 2) + ' secs')} from now...`)
                     console.log(`---------------------`)
                 }
             } else if (typeOf === 'transfer' && operationDetails.memo.startsWith('https://steemit.com/') && Number(operationDetails.amount.replace(' STEEM', '')) >= 1) {
@@ -242,22 +305,9 @@ async function mainBot() {
                     avgValue = 0.000
                 }
 
-                const q1 = Quartile(valueData, 0.25);
-                const q2 = Quartile(valueData, 0.5);
-                const q3 = Quartile(valueData, 0.75);
-                const diff = ((q1 + q2 + q3) / 3) - avgValue
-                let percentile = round((diff / avgValue) * 100, 3)
-                if (isNaN(percentile)) {
-                    percentile = 0;
-                }
+                const percentile = calculateProfit(valueData, avgValue);
 
                 let votesignal = true
-                FrontRunPostDetails.active_votes.forEach(voter => {
-                    if (voter.voter === data.to){
-                        votesignal = false
-                    }
-                })
-
                 if (FrontRunCurrentVoters > MAXVOTERS || votingPower < MINVOTINGPOWER 
                     || (FrontRunPostValue / avgValue) > 0.10 || FrontRunAuthorRep < MINREP
                     || FrontRunMinuteDiff > 2880) {
@@ -268,34 +318,133 @@ async function mainBot() {
                 if (FrontRunCurrentVoters === 0 && FrontRunBalance >= 1 && votingPower >= MINVOTINGPOWER) {
                     votesignal = true
                 }
+
+                FrontRunPostDetails.active_votes.forEach(voter => {
+                    if (voter.voter === data.to || voter.voter === USERNAME){
+                        votesignal = false
+                    }
+                })
             
                 frontRuns += 1
-                console.log(`Front Running Transfer detected in block \x1b[33m${blockId}\x1b[0m! => Upvote bot: \x1b[33m@${operationDetails.to}\x1b[0m`)
+                console.log(`Front Running Transfer detected in block ${yt(blockId)}! => Upvote bot: ${yt('@' + operationDetails.to)}`)
                 if (votesignal === true) {
-                    console.log(`AUTHOR: \x1b[33m${FrontRunAuthor}\x1b[0m -- REP: \x1b[33m${FrontRunAuthorRep}\x1b[0m -- Avg Post-value: \x1b[33m${avgValue}\x1b[0m`)
-                    console.log(`POST-LINK: \x1b[33m${FrontRunMemo}\x1b[0m`)
-                    console.log(`Post Value: \x1b[33m${FrontRunPostValue}\x1b[0m -- Post-Voters: \x1b[33m${FrontRunCurrentVoters}\x1b[0m -- AGE: \x1b[33m${round(FrontRunMinuteDiff, 2)} mins\x1b[0m -- Amount Transfered: \x1b[33m${FrontRunBalance}\x1b[0m`)
-                    console.log(`\x1b[32mVOTE OPPORTUNITY DETECTED! Broadcasting now...\x1b[0m`)
-
-                    const wif = steem.auth.toWif(USERNAME, KEY, 'posting');
-                    steem.broadcast.vote(wif, USERNAME, FrontRunAuthor, FrontRunPerm, VOTEWEIGHT, function(err, result) {
-                        if (err) {
-                            fr_errors += 1
-                            console.log(err)
-                            fs.appendFileSync('./errorlog.txt', `\n${err}`)
-                        } else {
-                            fr_votes += 1
-                            console.log('\x1b[32mVote Success!\x1b[0m');
-                            fs.appendFileSync('./log.txt', `\nAUTHOR: ${FrontRunAuthor} -- LINK: ${FrontRunMemo} -- DATE: ${new Date()} -- VOTED AFTER: ${FrontRunMinuteDiff} mins -- Block-Id: ${blockId}\n---------------------------`)
-                        }
-                    });
+                    console.log(`Author: ${yt(FrontRunAuthor)} -- Reputation: ${yt(FrontRunAuthorRep)} -- Avg Post-value: ${yt(avgValue)}`)
+                    console.log(`Post-link: ${yt(FrontRunMemo)}`)
+                    console.log(`Post Value: ${yt(FrontRunPostValue)} -- Post-Voters: ${yt(FrontRunCurrentVoters)} -- Age: ${yt(round(FrontRunMinuteDiff, 2) + ' mins')} -- Amount Transfered: ${yt(FrontRunBalance)}`)
+                    console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now...`))
+                    voteNow(FrontRunAuthor, FrontRunPerm, FrontRunMemo, FrontRunMinuteDiff, blockId, 'frontrun');
                     console.log(`---------------------`)
                 } else {
-                    console.log(`AUTHOR: \x1b[33m${FrontRunAuthor}\x1b[0m -- REP: \x1b[33m${FrontRunAuthorRep}\x1b[0m -- Avg Post-value: \x1b[33m${avgValue}\x1b[0m`)
-                    console.log(`POST-LINK: \x1b[33m${FrontRunMemo}\x1b[0m`)
-                    console.log(`Post Value: \x1b[33m${FrontRunPostValue}\x1b[0m -- Post-Voters: \x1b[33m${FrontRunCurrentVoters}\x1b[0m -- AGE: \x1b[33m${round(FrontRunMinuteDiff, 2)} mins\x1b[0m -- Amount Transfered: \x1b[33m${FrontRunBalance}\x1b[0m`)
-                    console.log('\x1b[31mNot profitable to vote! :(\x1b[0m')
+                    console.log(`Author: ${yt(FrontRunAuthor)} -- Rep: ${yt(FrontRunAuthorRep)} -- Avg Post-value: ${yt(avgValue)}`)
+                    console.log(`Post-link: ${yt(FrontRunMemo)}`)
+                    console.log(`Post Value: ${yt(FrontRunPostValue)} -- Post-Voters: ${yt(FrontRunCurrentVoters)} -- Age: ${yt(round(FrontRunMinuteDiff, 2) + ' mins')} -- Amount Transfered: ${yt(FrontRunBalance)}`)
+                    console.log(rt('Not profitable to vote! :('))
                     console.log(`---------------------`)
+                }
+            } else if (typeOf === 'comment' && operationDetails.parent_author != '' && !commentTracker.includes(operationDetails.author)) {
+                const commentAuthor = operationDetails.author
+                const commentLink = `https://steemit.com/${operationDetails.parent_permlink}/@${commentAuthor}/${operationDetails.permlink}`
+
+                const commentData = await client.database.getState(`/${operationDetails.parent_permlink}/@${commentAuthor}/${operationDetails.permlink}`)
+                const commentDetails = Object.values(commentData.content)[0]
+
+                const commentCurrentValue = Number(commentDetails.pending_payout_value.replace(' SBD', ''))
+                const commentCurrentVoters = commentDetails.active_votes.length
+
+                const commentCreateDate = Date.parse(new Date(commentDetails.created).toISOString())
+                const nowTime = new Date();
+                const minuteDiff = ((nowTime - commentCreateDate) / 1000 / 60) - 120
+
+                const authorCommentState = await client.database.getState(`/@${commentAuthor}/comments`)
+                const authorDetails = Object.values(authorCommentState.accounts)[0]
+                const authorRep = steem.formatter.reputation(authorDetails.reputation)
+                const authorContent = Object.values(authorCommentState.content)
+
+                let commentCount = 0
+                let totalCommentValue = 0
+                let valueData = [];
+
+                authorContent.forEach(authorComment => {
+                    const commentValue = Number(authorComment.pending_payout_value.replace(' SBD', ''))
+                    const didPayout = Number(authorComment.total_payout_value.replace(' SBD', ''))
+
+                    if (authorComment.author === commentAuthor && didPayout === 0) {
+                        commentCount += 1
+                        totalCommentValue += commentValue
+                        valueData.push(commentValue)
+                    }
+                })
+
+                let avgValue = totalCommentValue / commentCount
+                if (isNaN(avgValue)) {
+                    avgValue = 0.000
+                }
+
+                const percentile = calculateProfit(valueData, avgValue);
+
+                if (authorRep >= MINREP && avgValue >= MINAVGCOMMENT && votingPower >= MINVOTINGPOWER
+                    && commentCurrentVoters <= MAXVOTERS && percentile >= PROFITMIN) {
+                        commentTracker.push(commentAuthor)
+                        console.log('Comment Detected!')
+                        console.log(`In block: ${yt(blockId)} | Comment-Match #: ${yt(commentTracker.length)}`)
+                        console.log(`Comment age: ${yt(round(minuteDiff, 2) + ' mins')} | Current Voters: ${yt(commentCurrentVoters)}`)
+                        console.log(`Author: ${yt(commentAuthor)} -- Reputation: ${yt(authorRep)} -- Active-comments: ${yt(commentCount)} -- Avg-comment-value: ${yt(round(avgValue, 3))} -- Chance for profit: ${yt(percentile + '%')}`)
+                        console.log(`Comment-link: ${yt(commentLink)}`)
+                        
+                        const scheduleTime = 240000 - ((minuteDiff * 60) * 1000)
+                        let schedule = new Promise((resolve, reject) => {
+                            setTimeout( async function() {
+                                votingData = await rcapi.getVPMana(USERNAME)
+                                votingPower = votingData.percentage / 100
+    
+                                const index = commentTracker.indexOf(commentAuthor)
+                                if (index > -1) {
+                                    commentTracker.splice(index, 1);
+                                }
+    
+                                if (votingPower >= MINVOTINGPOWER) {
+                                    commentInspections += 1
+                                    const newCommentData = await client.database.getState(`/${operationDetails.parent_permlink}/@${commentAuthor}/${operationDetails.permlink}`)
+                                    const newCommentDetails = Object.values(newCommentData.content)[0]
+                                    const newCommentCreateDate = Date.parse(new Date(newCommentDetails.created).toISOString())
+                                    
+                                    const newNowTime = new Date();
+                                    const newMinuteDiff = ((newNowTime - newCommentCreateDate) / 1000 / 60) - 120
+    
+                                    const commentValue = Number(newCommentDetails.pending_payout_value.replace(' SBD', ''))
+                                    const commentTotalVoters = newCommentDetails.active_votes.length
+    
+                                    console.log(`Inspection time for ${yt('@' + commentAuthor)}!`)
+                                    console.log(`Comment-Age: ${yt(round(newMinuteDiff, 2))} -- Value: ${yt(commentValue)} -- VOTERS: ${yt(commentTotalVoters)}`)
+    
+                                    let votesignal = true
+                                    newCommentDetails.active_votes.forEach(voter => {
+                                        if (voter.voter === USERNAME){
+                                            votesignal = false
+                                        }
+                                    })
+    
+                                    if (commentCurrentVoters <= MAXVOTERS && (commentValue / avgValue) <= 0.10 && votesignal === true) {
+                                        const linkList = commentLink.split('/')
+                                        const commentPerm = linkList[linkList.length -1]
+                                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now...`))
+                                        console.log(`---------------------`)
+                                        voteNow(commentAuthor, commentPerm, commentLink, newMinuteDiff, blockId, 'comment');
+                                    } else if (votesignal === false) {
+                                        console.log(rt(`Already voted here!`))
+                                    } else {
+                                        console.log(rt(`Not profitable to vote! =(`))
+                                        console.log(`---------------------`)
+                                    }
+                                } else {
+                                    console.log(`Inspection time for ${yt('@' + author)}!`)
+                                    console.log(rt(`Voting power is currently too low to inspect this comment! (${round(votingPower - MINVOTINGPOWER, 2)})`))
+                                    console.log(`---------------------`)
+                                }
+                            }, scheduleTime)
+                        })
+                        console.log(`Scheduled inspection for ${yt(round(scheduleTime / 1000, 2) + ' secs')} from now...`)
+                        console.log(`---------------------`)
                 }
             }
         })
