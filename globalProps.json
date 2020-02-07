@@ -2,12 +2,13 @@
     "USERNAME" : "youraccountname",
     "KEY": "POSTING KEY GOES HERE",
     "MINVOTINGPOWER" : 98,
-    "VOTEWEIGHT" : 1750,
-    "MAXPOSTAGE" : 6,
+    "VOTEWEIGHT" : 1250,
     "MINPOSTAGE" : 4,
     "MINAVGVALUE" : 1,
     "PROFITMIN" : 0.001,
     "MAXVOTERS" : 5,
     "MINREP" : 35,
-    "MAXACTIVEPOSTS" : 7
+    "MAXACTIVEPOSTS" : 7,
+    "MINAVGCOMMENT" : 0.2,
+    "COMMENTBUFFER" : 0.5
 }
