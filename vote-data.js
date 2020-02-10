@@ -6,7 +6,11 @@ const client = new dsteem.Client('https://api.steemit.com')
 
 const globalPropsFile = fs.readFileSync('./globalProps.json')
 const globalProps = JSON.parse(globalPropsFile);
-const {USERNAME} = globalProps
+const {USERLIST} = globalProps
+
+const userNamesList = USERLIST.map(user => {
+    return user[0]
+})
 
 const data = fs.readFileSync('./log.txt', 'utf-8')
 const dataList = data.split('---------------------------')
@@ -41,7 +45,7 @@ const main = async () => {
                     let rshares = 0
                     let accountsVoted = 0
                     postDetails.active_votes.forEach(voter => {
-                        if (voter.voter === USERNAME) {
+                        if (userNamesList.includes(voter.voter)) {
                             accountsVoted += 1
                             rshares = rshares + Number(voter.rshares)
                         }
