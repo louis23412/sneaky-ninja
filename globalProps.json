@@ -1,14 +1,16 @@
 {
-    "USERNAME" : "youraccountname",
-    "KEY": "POSTING KEY GOES HERE",
-    "MINVOTINGPOWER" : 98,
+    "USERLIST" : [
+        ["username_here", "KEY_HERE"]
+    ],
+    "MINVOTINGPOWER" : 97,
     "VOTEWEIGHT" : 1250,
-    "MINPOSTAGE" : 4,
+    "MINPOSTAGE" : 3.93,
     "MINAVGVALUE" : 1,
     "PROFITMIN" : 0.001,
     "MAXVOTERS" : 5,
     "MINREP" : 35,
     "MAXACTIVEPOSTS" : 7,
-    "MINAVGCOMMENT" : 0.2,
-    "COMMENTBUFFER" : 0.5
+    "MINAVGCOMMENT" : 1,
+    "COMMENTBUFFER" : 0.6,
+    "MINFRONTRUNAMOUNT" : 3
 }
