@@ -22,7 +22,11 @@ const {
     MAXACTIVEPOSTS,
     MINAVGCOMMENT,
     COMMENTBUFFER,
-    MINFRONTRUNAMOUNT
+    ALWAYSON,
+    ALWAYSONMINAVG,
+    ALWAYSONVP,
+    ALWAYSONTIME,
+    SPGAINREFRESH
 } = globalProps;
 
 const userNamesList = USERLIST.map(user => {
@@ -73,6 +77,21 @@ const calculateProfit = (arr, avgval) => {
 }
 
 const getVP = async () => {
+    if (blockCounter % SPGAINREFRESH === 0) {
+        const result = await client.database.getDynamicGlobalProperties();
+        vestPerSteem = Number(result.total_vesting_fund_steem.replace(' STEEM', '')) / Number(result.total_vesting_shares.replace(' VESTS', ''))
+    
+        const usersData = await client.database.getAccounts(userNamesList)
+        votingSteemPower = 0
+    
+        for (usr of usersData) {
+            const vestingShares = Number(usr.vesting_shares.replace(' VESTS', ''))
+            const delegatedVestingShares = Number(usr.delegated_vesting_shares.replace(' VESTS', ''))
+            const receivedVestingShares = Number(usr.received_vesting_shares.replace(' VESTS', ''))
+            votingSteemPower += ((vestingShares + receivedVestingShares) - delegatedVestingShares) * vestPerSteem
+        }
+    }
+
     for (userName of userNamesList) {
         votingTracker[userName] = await rcapi.getVPMana(userName)
     }
@@ -115,8 +134,8 @@ const voteNow = (author, postperm, link, age, blockid, type, voteWeight=VOTEWEIG
                         errors++
                     } else if (type === 'comment') {
                         commentErrors++
-                    } else if (type === 'frontrun') {
-                        fr_errors++
+                    } else if (type === 'alwayson') {
+                        alwaysOnErrors++
                     }
                     fs.appendFileSync('./errorlog.txt', `\n${err}`)
                 } else {
@@ -133,8 +152,8 @@ const voteNow = (author, postperm, link, age, blockid, type, voteWeight=VOTEWEIG
             votes++
         } else if (type === 'comment') {
             commentVotes++
-        } else if (type === 'frontrun') {
-            fr_votes++
+        } else if (type === 'alwayson') {
+            alwaysOnVotes++
         }
     }
 }
@@ -155,13 +174,20 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                 if (index > -1) {
                     commentTracker.splice(index, 1)
                 }
+            } else if (contentType === 'alwayson') {
+                index = alwaysOnTracker.indexOf(author)
+                if (index > -1) {
+                    alwaysOnTracker.splice(index, 1)
+                }
             }
 
-            if (votingPower >= MINVOTINGPOWER) {
+            if (votingPower >= MINVOTINGPOWER || (contentType === 'alwayson' && votingPower >= ALWAYSONVP)) {
                 if (contentType === 'post') {
                     inspections++
                 } else if (contentType === 'comment') {
                     commentInspections++
+                } else if (contentType === 'alwayson') {
+                    alwaysOnInspections++
                 }
 
                 const PostData = await client.database.getState(`/${parentPerm}/@${author}/${permLink}`)
@@ -178,16 +204,22 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
 
                 let votesignal = true
                 PostDetails.active_votes.forEach(voter => {
-                    if (userNamesList.includes(voter.voter)){
+                    if (userNamesList.includes(voter.voter) || voter === author){
                         votesignal = false
                     }
                 })
 
-                if (totalVoters <= MAXVOTERS && (postValue / avgValue) <= 0.05 && votesignal === true && acceptingPayment > 0) {
+                if (totalVoters <= MAXVOTERS && (postValue / avgValue) <= 0.025 && votesignal === true && acceptingPayment > 0) {
                     let newVoteWeight = Math.round(VOTEWEIGHT * avgValue)
+                    if (contentType === 'alwayson') {
+                        newVoteWeight = Math.round(newVoteWeight * 2)
+                        onlineVotersList = [...USERLIST]
+                    }
+
                     if (newVoteWeight > 10000) {
                         newVoteWeight = 10000;
                     }
+
                     const linkList = link.split('/')
                     const postPerm = linkList[linkList.length -1]
                     console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now...`))
@@ -209,25 +241,109 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
     console.log(`Scheduled inspection for ${yt(round(time / 1000, 2) + ' secs')} from now...`)
     console.log(`---------------------`)
 }
+
+const ScheduleFlag = async (operationDetails, type) => {
+    const author = operationDetails.author
+    const parentPermLink = operationDetails.parent_permlink
+    const permlink = operationDetails.permlink
+    const link = `https://steemit.com/${parentPermLink}/@${author}/${permlink}`
+    const postData = await client.database.getState(`/${parentPermLink}/@${author}/${permlink}`)
+    const postDetails = Object.values(postData.content)[0]
+    const postCreateDate = Date.parse(new Date(postDetails.created).toISOString())
+    const currentVoters = postDetails.active_votes.length
+    const nowTime = new Date();
+    const minuteDiff = ((nowTime - postCreateDate) / 1000 / 60) - 120
+    const authorState = await client.database.getState(`/@${author}`)
+    const authorDetails = Object.values(authorState.accounts)[0]
+    const authorRep = steem.formatter.reputation(authorDetails.reputation)
+    let authorContent = Object.values(authorState.content)
+
+    if (type === 'comment') {
+        dataToGet = await client.database.getState(`/@${author}/comments`)
+        authorContent = Object.values(dataToGet.content)
+    }
+
+    let postCount = 0
+    let totalPostValue = 0
+    let valueData = [];
+
+    authorContent.forEach(authorPost => {
+        const postValue = Number(authorPost.pending_payout_value.replace(' SBD', ''))
+        const didPayout = Number(authorPost.total_payout_value.replace(' SBD', ''))
+
+        if (authorPost.author === author && didPayout === 0) {
+            postCount += 1
+            totalPostValue += postValue
+            valueData.push(postValue)
+        }
+    })
+
+    let avgValue = totalPostValue / postCount
+    if (isNaN(avgValue)) {
+        avgValue = 0.000
+    }
+
+    const percentile = calculateProfit(valueData, avgValue);
+
+    let votesignal = false
+    if (type === 'post') {
+        if (authorRep >= MINREP && postCount <= MAXACTIVEPOSTS
+            && avgValue >= MINAVGVALUE && percentile >= PROFITMIN && votingPower >= MINVOTINGPOWER 
+            && currentVoters <= MAXVOTERS ) {
+                votesignal = true;
+        } 
+    } else if (type === 'comment') {
+        if (authorRep >= MINREP && avgValue >= MINAVGCOMMENT && votingPower >= MINVOTINGPOWER
+            && currentVoters <= MAXVOTERS && percentile >= PROFITMIN) {
+                votesignal = true;
+        }
+    } else if (type === 'alwayson') {
+        if (authorRep >= MINREP && postCount <= MAXACTIVEPOSTS
+            && avgValue >= ALWAYSONMINAVG && percentile >= PROFITMIN && votingPower >= ALWAYSONVP 
+            && currentVoters <= MAXVOTERS ) {
+                votesignal = true;
+        }
+    }
+
+    if (votesignal === true) {
+        return {
+            signal : true,
+            author : author,
+            avg : avgValue,
+            link : link,
+            parentPerm : parentPermLink,
+            age : minuteDiff,
+            perm : permlink
+        }
+    } else {
+        return {
+            signal : false
+        };
+    }
+}
 // -------------------------------------------
 
 //Runtime variables:
 const startTime = new Date()
 let blockCounter = 0
 let tracker = []
+let alwaysOnTracker = []
 let commentTracker = []
 let votes = 0
-let fr_votes = 0
 let inspections = 0
 let commentInspections = 0
 let commentErrors = 0
 let commentVotes = 0
 let errors = 0
-let fr_errors = 0
-let frontRuns = 0
 let votingTracker = {}
 let offlineVoters = {}
 let onlineVotersList = []
+let votingSteemPower = 0
+let startSP = 0
+let alwaysOnInspections = 0
+let alwaysOnErrors = 0
+let alwaysOnVotes = 0
+let votingPower = 0
 
 console.clear()
 console.log('Starting up block stream...')
@@ -235,10 +351,12 @@ console.log('Starting up block stream...')
 stream.pipe(es.map(async (block, callback) => {
     callback(null, util.inspect(block, {colors: true, depth: null}) + '\n')
 
-    const votingPower = await getVP();
+    votingPower = await getVP();
     let voteStatus = rt(`Recharging Steem Power...`)
     if (votingPower >= MINVOTINGPOWER) {
         voteStatus = gt('Online!')
+    } else if (votingPower >= ALWAYSONVP && votingPower < MINVOTINGPOWER) {
+        voteStatus = yt(`Looking for ${ALWAYSONTIME} min posts...`)
     }
 
     for (listedVoter of USERLIST) {
@@ -262,9 +380,19 @@ stream.pipe(es.map(async (block, callback) => {
         return yt(`@${user}`)
     })
 
+    const alwaysOnDisplayTracker = alwaysOnTracker.map(user => {
+        return yt(`@${user}`)
+    })
+
     const data = block.transactions
     const blockId = block.block_id
     blockCounter ++
+
+    if (blockCounter === 1) {
+        startSP = votingSteemPower
+    }
+
+    const runtimeSPGain = votingSteemPower - startSP
 
     const displayVotingPower = Object.entries(votingTracker).map(acc => {
         return yt(`@${acc[0]}(${acc[1].percentage / 100}%)`)
@@ -274,194 +402,62 @@ stream.pipe(es.map(async (block, callback) => {
         return yt(`@${acc[0]}(${acc[1].percentage / 100}%)`)
     })
 
-    console.log(`Block-ID: ${yt(blockId)} || ${yt(blockCounter)} blocks inspected!`)
-    console.log(`Status: ${voteStatus} || Run-time: ${yt(round((new Date() - startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${yt(round(votingPower, 3) + '%')}`)
-    console.log(`Accounts online: ${yt(Object.keys(votingTracker).length)}/${yt(userNamesList.length)} ==> [${displayVotingPower}]`)
-    console.log(`Accounts recharging: ${yt(Object.keys(offlineVoters).length)}/${yt(userNamesList.length)} ==> [${displayOfflinePower}]`)
-    console.log(`Post Votes: ${yt(votes)} || Comment Votes: ${yt(commentVotes / userNamesList.length)} || Front-Run Votes: ${yt(fr_votes / userNamesList.length)} || Front-Runs Detected: ${yt(frontRuns)}`)
-    console.log(`Post Vote fails: ${yt(errors)} || Comment Vote fails: ${yt(commentErrors)} || Front-Runs Vote Fails: ${yt(fr_errors)}`)
-    console.log(`Post-Inspections: ${yt(inspections)} || Pending Post inspections: ${yt(tracker.length)} ==> [${displayTracker}]`)
-    console.log(`Comment-Inspections: ${yt(commentInspections)} || Pending Comment inspections: ${yt(commentTracker.length)} ==> [${commentDisplayTracker}]`)
-    console.log(yt('-----------------------------------'))
+    console.log(`${yt('*')} Status: ${voteStatus} || Run-time: ${yt(round((new Date() - startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${yt(round(votingPower, 3) + '%')}`)
+    console.log(`${yt('*')} Block-ID: ${yt(blockId)} || ${yt(blockCounter)} blocks inspected! `)
+    console.log(`└─| Total SP voting: ${yt(votingSteemPower)} || Run-time SP Gain: ${yt(runtimeSPGain)}`)
+    console.log(`└─| Accounts online: ${yt(Object.keys(votingTracker).length)}/${yt(userNamesList.length)} ==> [${displayVotingPower}]`)
+    console.log(`└─| Accounts recharging: ${yt(Object.keys(offlineVoters).length)}/${yt(userNamesList.length)} ==> [${displayOfflinePower}]`)
+    console.log(`${yt('*')} Post Votes: ${yt(votes)} || Post Vote fails: ${yt(errors)}`)
+    console.log(`└─| Post-Inspections: ${yt(inspections)} || Pending Post inspections: ${yt(tracker.length)} ==> [${displayTracker}]`)
+    console.log(`${yt(`*`)} Comment Votes: ${yt(commentVotes)} || Comment Vote fails: ${yt(commentErrors)}`)
+    console.log(`└─| Comment-Inspections: ${yt(commentInspections)} || Pending Comment inspections: ${yt(commentTracker.length)} ==> [${commentDisplayTracker}]`)
+    console.log(`${yt('*')} Always on Votes: ${yt(alwaysOnVotes)} || Always on Vote fails: ${yt(alwaysOnErrors)}`)
+    console.log(`└─| Always on-Inspections: ${yt(alwaysOnInspections)} || Pending inspections: ${yt(alwaysOnTracker.length)} ==> [${alwaysOnDisplayTracker}]`)
+    console.log(`${yt('-----------------------------------')}`)
 
     data.forEach(async trans => {
         const operations = trans.operations
         const typeOf = operations[0][0]
         const operationDetails = operations[0][1]
 
+        //Normal Post & comment voting
         if (typeOf === 'comment' && operationDetails.parent_author === '' 
             && !tracker.includes(operationDetails.author) && votingPower >= MINVOTINGPOWER) {
-            const author = operationDetails.author
-            const parentPermLink = operationDetails.parent_permlink
-            const permlink = operationDetails.permlink
-            const link = `https://steemit.com/${parentPermLink}/@${author}/${permlink}`
-            const postData = await client.database.getState(`/${parentPermLink}/@${author}/${permlink}`)
-            const postDetails = Object.values(postData.content)[0]
-            const postCreateDate = Date.parse(new Date(postDetails.created).toISOString())
-            const currentVoters = postDetails.active_votes.length
-            const nowTime = new Date();
-            const minuteDiff = ((nowTime - postCreateDate) / 1000 / 60) - 120
-            const authorState = await client.database.getState(`/@${author}`)
-            const authorDetails = Object.values(authorState.accounts)[0]
-            const authorRep = steem.formatter.reputation(authorDetails.reputation)
-            const authorContent = Object.values(authorState.content)
+                const answer = await ScheduleFlag(operationDetails, 'post')
+                if (answer.signal === true) {
+                    tracker.push(answer.author)
+                    console.log('Post Detected!')
+                    console.log(`In block: ${yt(blockId)} | Match #: ${yt(tracker.length)}`)
 
-            let postCount = 0
-            let totalPostValue = 0
-            let valueData = [];
-
-            authorContent.forEach(authorPost => {
-                const postValue = Number(authorPost.pending_payout_value.replace(' SBD', ''))
-                const didPayout = Number(authorPost.total_payout_value.replace(' SBD', ''))
-
-                if (authorPost.author === author && didPayout === 0) {
-                    postCount += 1
-                    totalPostValue += postValue
-                    valueData.push(postValue)
+                    let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((answer.age * 60) * 1000)
+                    setSchedule(scheduleTime, 'post', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
                 }
-            })
-
-            let avgValue = totalPostValue / postCount
-            if (isNaN(avgValue)) {
-                avgValue = 0.000
-            }
-
-            const percentile = calculateProfit(valueData, avgValue);
-
-            if (authorRep >= MINREP && postCount <= MAXACTIVEPOSTS
-                && avgValue >= MINAVGVALUE && percentile >= PROFITMIN && votingPower >= MINVOTINGPOWER 
-                && currentVoters <= MAXVOTERS ) {
-                tracker.push(author)
-                console.log('Post Detected!')
-                console.log(`In block: ${yt(blockId)} | Match #: ${yt(tracker.length)}`)
-                console.log(`Post age: ${yt(round(minuteDiff, 2) + ' mins')} | Current Voters: ${yt(currentVoters)}`)
-                console.log(`Author: ${yt(author)} -- Reputation: ${yt(authorRep)} -- Active-posts: ${yt(postCount)} -- Avg-post-value: ${yt(round(avgValue, 3))} -- Chance for profit: ${yt(percentile + '%')}`)
-                console.log(`Post-link: ${yt(link)}`)
-
-                let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((minuteDiff * 60) * 1000)
-                setSchedule(scheduleTime, 'post', author, parentPermLink, permlink, avgValue, link, blockId);
-            }
-        } else if (typeOf === 'transfer' && operationDetails.memo.startsWith('https://steemit.com/') 
-            && Number(operationDetails.amount.replace(' STEEM', '')) >= MINFRONTRUNAMOUNT && votingPower >= MINVOTINGPOWER) {
-            const FrontRunBalance = Number(operationDetails.amount.replace(' STEEM', ''))
-            const FrontRunMemo = operationDetails.memo
-            const FrontRunList = FrontRunMemo.split('/')
-            const FrontRunPerm = FrontRunList[FrontRunList.length - 1]
-            const FrontRunAuthor = FrontRunList[FrontRunList.length - 2].replace('@', '')
-            const FrontRunParentPermLink = FrontRunList[FrontRunList.length - 3]
-            const FrontRunPostData = await client.database.getState(`/${FrontRunParentPermLink}/@${FrontRunAuthor}/${FrontRunPerm}`)
-            const FrontRunPostDetails = Object.values(FrontRunPostData.content)[0]
-            const FrontRunPostValue = Number(FrontRunPostDetails.pending_payout_value.replace(' SBD', ''))
-            const FrontRunPostCreateDate = Date.parse(new Date(FrontRunPostDetails.created).toISOString())
-            const FrontRunCurrentVoters = FrontRunPostDetails.active_votes.length
-            const FrontRunNowTime = new Date();
-            const FrontRunMinuteDiff = ((FrontRunNowTime - FrontRunPostCreateDate) / 1000 / 60) - 120
-            const FrontRunAuthorState = await client.database.getState(`/@${FrontRunAuthor}`)
-            const FrontRunAuthorDetails = Object.values(FrontRunAuthorState.accounts)[0]
-            const FrontRunAuthorRep = steem.formatter.reputation(FrontRunAuthorDetails.reputation)
-            const FrontRunAuthorContent = Object.values(FrontRunAuthorState.content)
-
-            let postCount = 0
-            let totalPostValue = 0
-            let valueData = [];
-
-            FrontRunAuthorContent.forEach(authorPost => {
-                let postValue = Number(authorPost.pending_payout_value.replace(' SBD', ''))
-                let didPayout = Number(authorPost.total_payout_value.replace(' SBD', ''))
-
-                if (authorPost.author === FrontRunAuthor && didPayout === 0) {
-                    postCount += 1
-                    totalPostValue += postValue
-                    valueData.push(postValue)
-                }
-            })
-
-            let avgValue = totalPostValue / postCount
-            if (isNaN(avgValue)) {
-                avgValue = 0.000
-            }
-
-            let votesignal = true
-            if (FrontRunCurrentVoters > MAXVOTERS || votingPower < MINVOTINGPOWER 
-                || (FrontRunPostValue / avgValue) > 0.05 || FrontRunAuthorRep < MINREP
-                || FrontRunMinuteDiff > 2880 || FrontRunMinuteDiff < MINPOSTAGE ) {
-                votesignal = false
-            }
-
-            //'Perfect' conditions
-            if (FrontRunCurrentVoters === 0 && FrontRunMinuteDiff >= MINPOSTAGE) {
-                votesignal = true
-            }
-
-            FrontRunPostDetails.active_votes.forEach(voter => {
-                if (voter.voter === data.to || userNamesList.includes(voter.voter)){
-                    votesignal = false
-                }
-            })
-        
-            frontRuns += 1
-            console.log(`Front Running Transfer detected in block ${yt(blockId)}! => Upvote bot: ${yt('@' + operationDetails.to)}`)
-            console.log(`Author: ${yt(FrontRunAuthor)} -- Reputation: ${yt(FrontRunAuthorRep)} -- Avg Post-value: ${yt(avgValue)}`)
-            console.log(`Post-link: ${yt(FrontRunMemo)}`)
-            console.log(`Post Value: ${yt(FrontRunPostValue)} -- Post-Voters: ${yt(FrontRunCurrentVoters)} -- Age: ${yt(round(FrontRunMinuteDiff, 2) + ' mins')} -- Amount Transfered: ${yt(FrontRunBalance)}`)
-
-            if (votesignal === true) {
-                console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now...`))
-                voteNow(FrontRunAuthor, FrontRunPerm, FrontRunMemo, FrontRunMinuteDiff, blockId, 'frontrun', newUserList=onlineVotersList);
-                console.log(`---------------------`)
-            } else {
-                console.log(rt('Not profitable to vote! :('))
-                console.log(`---------------------`)
-            }
         } else if (typeOf === 'comment' && operationDetails.parent_author != '' 
             && !commentTracker.includes(operationDetails.author) && votingPower >= MINVOTINGPOWER) {
-            const commentAuthor = operationDetails.author
-            const commentLink = `https://steemit.com/${operationDetails.parent_permlink}/@${commentAuthor}/${operationDetails.permlink}`
-            const commentData = await client.database.getState(`/${operationDetails.parent_permlink}/@${commentAuthor}/${operationDetails.permlink}`)
-            const commentDetails = Object.values(commentData.content)[0]
-            const commentCurrentVoters = commentDetails.active_votes.length
-            const commentCreateDate = Date.parse(new Date(commentDetails.created).toISOString())
-            const nowTime = new Date();
-            const minuteDiff = ((nowTime - commentCreateDate) / 1000 / 60) - 120
-            const authorCommentState = await client.database.getState(`/@${commentAuthor}/comments`)
-            const authorDetails = Object.values(authorCommentState.accounts)[0]
-            const authorRep = steem.formatter.reputation(authorDetails.reputation)
-            const authorContent = Object.values(authorCommentState.content)
+                const answer = await ScheduleFlag(operationDetails, 'comment')
+                if (answer.signal === true) {
+                    commentTracker.push(answer.author)
+                    console.log('Comment Detected!')
+                    console.log(`In block: ${yt(blockId)} | Match #: ${yt(commentTracker.length)}`)
 
-            let commentCount = 0
-            let totalCommentValue = 0
-            let valueData = [];
-
-            authorContent.forEach(authorComment => {
-                const commentValue = Number(authorComment.pending_payout_value.replace(' SBD', ''))
-                const didPayout = Number(authorComment.total_payout_value.replace(' SBD', ''))
-
-                if (authorComment.author === commentAuthor && didPayout === 0) {
-                    commentCount += 1
-                    totalCommentValue += commentValue
-                    valueData.push(commentValue)
+                    let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((answer.age * 60) * 1000)
+                    setSchedule(scheduleTime, 'comment', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
                 }
-            })
+        }
 
-            let avgValue = totalCommentValue / commentCount
-            if (isNaN(avgValue)) {
-                avgValue = 0.000
-            }
+        //Always on
+        if (typeOf === 'comment' && operationDetails.parent_author === '' 
+            && !alwaysOnTracker.includes(operationDetails.author) && votingPower >= ALWAYSONVP 
+            && !tracker.includes(operationDetails.author) && ALWAYSON === true) {
+                const answer = await ScheduleFlag(operationDetails, 'alwayson')
+                if (answer.signal === true) {
+                    alwaysOnTracker.push(answer.author)
+                    console.log('Always-on Post Detected!')
+                    console.log(`In block: ${yt(blockId)} | Match #: ${yt(alwaysOnTracker.length)}`)
 
-            const percentile = calculateProfit(valueData, avgValue);
-
-            if (authorRep >= MINREP && avgValue >= MINAVGCOMMENT && votingPower >= MINVOTINGPOWER
-                && commentCurrentVoters <= MAXVOTERS && percentile >= PROFITMIN) {
-                commentTracker.push(commentAuthor)
-                console.log('Comment Detected!')
-                console.log(`In block: ${yt(blockId)} | Comment-Match #: ${yt(commentTracker.length)}`)
-                console.log(`Comment age: ${yt(round(minuteDiff, 2) + ' mins')} | Current Voters: ${yt(commentCurrentVoters)}`)
-                console.log(`Author: ${yt(commentAuthor)} -- Reputation: ${yt(authorRep)} -- Active-comments: ${yt(commentCount)} -- Avg-comment-value: ${yt(round(avgValue, 3))} -- Chance for profit: ${yt(percentile + '%')}`)
-                console.log(`Comment-link: ${yt(commentLink)}`)
-                
-                let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((minuteDiff * 60) * 1000)
-                setSchedule(scheduleTime, 'comment', commentAuthor, operationDetails.parent_permlink, operationDetails.permlink, avgValue, commentLink, blockId)
-            }
+                    let scheduleTime = (ALWAYSONTIME * 60) * 1000 - ((answer.age * 60) * 1000)
+                    setSchedule(scheduleTime, 'alwayson', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
+                }
         }
     })
 }))
