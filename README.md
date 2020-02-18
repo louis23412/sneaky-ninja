@@ -38,7 +38,11 @@
    ###### MAXACTIVEPOSTS -- Maximum amount of active posts/comments for the user
    ###### MINAVGCOMMENT -- The minimum average value for the users comments
    ###### COMMENTBUFFER -- Used to determine the final voteweight on a users comment (Example: 0.6 = 60% of the final voteweight)
-   ###### MINFRONTRUNAMOUNT -- The minimum amount needed to trigger an inspection on a post when fronr running (SBD / STEEM)
+   ###### ALWAYSON -- true or false, when set to true ALWAYSON voting will be active when above the minimum voting power.
+   ###### ALWAYSONMINAVG -- Minimum post value needed for the user to trigger a schedule for inspection
+   ###### ALWAYSONVP -- Minimum voting power needed to activate ALWAYSON voting.
+   ###### ALWAYSONTIME -- Minimum post age to set the schedule for inspection.
+   ###### SPGAINREFRESH -- The amount of blocks to pass before updating the SPGain tracker
    
 * Save the config file, then run the bot <br>
    `npm start`
