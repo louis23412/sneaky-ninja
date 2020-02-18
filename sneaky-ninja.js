@@ -99,8 +99,14 @@ const getVP = async () => {
     for (value of Object.entries(votingTracker)) {
         if (value[1].percentage / 100 >= MINVOTINGPOWER) {
             delete offlineVoters[value[0]]
+            delete standByTracker[value[0]]
+        } else if (value[1].percentage / 100 >= ALWAYSONVP) {
+            delete votingTracker[value[0]]
+            delete offlineVoters[value[0]]
+            standByTracker[value[0]] = value[1]
         } else {
             delete votingTracker[value[0]]
+            delete standByTracker[value[0]]
             offlineVoters[value[0]] = value[1]
         }
     }
@@ -110,6 +116,11 @@ const getVP = async () => {
             return user.percentage / 100
         })
         return Math.max(...newList)
+    } else if (Object.values(standByTracker).length > 0) {
+        const newList = Object.values(standByTracker).map(user => {
+            return user.percentage / 100
+        })
+        return Math.max(...newList) 
     } else {
         const newList = Object.values(offlineVoters).map(user => {
             return user.percentage / 100
@@ -181,7 +192,7 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                 }
             }
 
-            if (votingPower >= MINVOTINGPOWER || (contentType === 'alwayson' && votingPower >= ALWAYSONVP)) {
+            if (votingPower >= MINVOTINGPOWER || contentType === 'alwayson') {
                 if (contentType === 'post') {
                     inspections++
                 } else if (contentType === 'comment') {
@@ -193,8 +204,7 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                 const PostData = await client.database.getState(`/${parentPerm}/@${author}/${permLink}`)
                 const PostDetails = Object.values(PostData.content)[0]
                 const PostCreateDate = Date.parse(new Date(PostDetails.created).toISOString())
-                const nowTime = new Date();
-                const MinuteDiff = ((nowTime - PostCreateDate) / 1000 / 60) - 120
+                const MinuteDiff = ((Math.floor((new Date()).getTime() / 1000) - PostCreateDate / 1000) / 1000) / 6
                 const postValue = Number(PostDetails.pending_payout_value.replace(' SBD', ''))
                 const acceptingPayment = Number(PostDetails.max_accepted_payout.replace(' SBD', ''))
                 const totalVoters = PostDetails.active_votes.length
@@ -213,7 +223,7 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                     let newVoteWeight = Math.round(VOTEWEIGHT * avgValue)
                     if (contentType === 'alwayson') {
                         newVoteWeight = Math.round(newVoteWeight * 2)
-                        onlineVotersList = [...USERLIST]
+                        onlineVotersList = onlineVotersList.concat(standByVotersList)
                     }
 
                     if (newVoteWeight > 10000) {
@@ -251,8 +261,7 @@ const ScheduleFlag = async (operationDetails, type) => {
     const postDetails = Object.values(postData.content)[0]
     const postCreateDate = Date.parse(new Date(postDetails.created).toISOString())
     const currentVoters = postDetails.active_votes.length
-    const nowTime = new Date();
-    const minuteDiff = ((nowTime - postCreateDate) / 1000 / 60) - 120
+    const minuteDiff = ((Math.floor((new Date()).getTime() / 1000) - postCreateDate / 1000) / 1000) / 6
     const authorState = await client.database.getState(`/@${author}`)
     const authorDetails = Object.values(authorState.accounts)[0]
     const authorRep = steem.formatter.reputation(authorDetails.reputation)
@@ -336,8 +345,10 @@ let commentErrors = 0
 let commentVotes = 0
 let errors = 0
 let votingTracker = {}
+let standByTracker = {}
 let offlineVoters = {}
 let onlineVotersList = []
+let standByVotersList = []
 let votingSteemPower = 0
 let startSP = 0
 let alwaysOnInspections = 0
@@ -356,19 +367,27 @@ stream.pipe(es.map(async (block, callback) => {
     if (votingPower >= MINVOTINGPOWER) {
         voteStatus = gt('Online!')
     } else if (votingPower >= ALWAYSONVP && votingPower < MINVOTINGPOWER) {
-        voteStatus = yt(`Looking for ${ALWAYSONTIME} min posts...`)
+        voteStatus = gt(`Looking for ${ALWAYSONTIME} min posts...`)
     }
 
     for (listedVoter of USERLIST) {
         if (Object.keys(votingTracker).includes(listedVoter[0]) && !onlineVotersList.includes(listedVoter) && 
         !Object.keys(offlineVoters).includes(listedVoter[0])) {
             onlineVotersList.push(listedVoter)
+        } else if (Object.keys(standByTracker).includes(listedVoter[0]) && !standByVotersList.includes(listedVoter)) {
+            standByVotersList.push(listedVoter)
         }
     }
 
     for (activeVoter of onlineVotersList) {
-        if (Object.keys(offlineVoters).includes(activeVoter[0])) {
+        if (Object.keys(offlineVoters).includes(activeVoter[0]) || Object.keys(standByTracker).includes(activeVoter[0])) {
             onlineVotersList.splice( onlineVotersList.indexOf(activeVoter), 1 );
+        }
+    }
+
+    for (activeVoter of standByVotersList) {
+        if (Object.keys(offlineVoters).includes(activeVoter[0]) || Object.keys(votingTracker).includes(activeVoter[0])) {
+            standByVotersList.splice( standByVotersList.indexOf(activeVoter), 1 );
         }
     }
 
@@ -402,10 +421,15 @@ stream.pipe(es.map(async (block, callback) => {
         return yt(`@${acc[0]}(${acc[1].percentage / 100}%)`)
     })
 
+    const displayStandByPower = Object.entries(standByTracker).map(acc => {
+        return yt(`@${acc[0]}(${acc[1].percentage / 100}%)`)
+    })
+
     console.log(`${yt('*')} Status: ${voteStatus} || Run-time: ${yt(round((new Date() - startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${yt(round(votingPower, 3) + '%')}`)
     console.log(`${yt('*')} Block-ID: ${yt(blockId)} || ${yt(blockCounter)} blocks inspected! `)
     console.log(`└─| Total SP voting: ${yt(votingSteemPower)} || Run-time SP Gain: ${yt(runtimeSPGain)}`)
     console.log(`└─| Accounts online: ${yt(Object.keys(votingTracker).length)}/${yt(userNamesList.length)} ==> [${displayVotingPower}]`)
+    console.log(`└─| Accounts on Standby: ${yt(Object.keys(standByTracker).length)}/${yt(userNamesList.length)} ===> [${displayStandByPower}]`)
     console.log(`└─| Accounts recharging: ${yt(Object.keys(offlineVoters).length)}/${yt(userNamesList.length)} ==> [${displayOfflinePower}]`)
     console.log(`${yt('*')} Post Votes: ${yt(votes)} || Post Vote fails: ${yt(errors)}`)
     console.log(`└─| Post-Inspections: ${yt(inspections)} || Pending Post inspections: ${yt(tracker.length)} ==> [${displayTracker}]`)
@@ -428,6 +452,8 @@ stream.pipe(es.map(async (block, callback) => {
                     tracker.push(answer.author)
                     console.log('Post Detected!')
                     console.log(`In block: ${yt(blockId)} | Match #: ${yt(tracker.length)}`)
+                    console.log(`Author: ${yt(answer.author)} | Content-age: ${yt(answer.age)}`)
+                    console.log(`Content-link: ${yt(answer.link)}`)
 
                     let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((answer.age * 60) * 1000)
                     setSchedule(scheduleTime, 'post', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
@@ -439,6 +465,8 @@ stream.pipe(es.map(async (block, callback) => {
                     commentTracker.push(answer.author)
                     console.log('Comment Detected!')
                     console.log(`In block: ${yt(blockId)} | Match #: ${yt(commentTracker.length)}`)
+                    console.log(`Author: ${yt(answer.author)} | Content-age: ${yt(answer.age)}`)
+                    console.log(`Content-link: ${yt(answer.link)}`)
 
                     let scheduleTime = (MINPOSTAGE * 60) * 1000 - ((answer.age * 60) * 1000)
                     setSchedule(scheduleTime, 'comment', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
@@ -454,6 +482,8 @@ stream.pipe(es.map(async (block, callback) => {
                     alwaysOnTracker.push(answer.author)
                     console.log('Always-on Post Detected!')
                     console.log(`In block: ${yt(blockId)} | Match #: ${yt(alwaysOnTracker.length)}`)
+                    console.log(`Author: ${yt(answer.author)} | Content-age: ${yt(answer.age)}`)
+                    console.log(`Content-link: ${yt(answer.link)}`)
 
                     let scheduleTime = (ALWAYSONTIME * 60) * 1000 - ((answer.age * 60) * 1000)
                     setSchedule(scheduleTime, 'alwayson', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId);
