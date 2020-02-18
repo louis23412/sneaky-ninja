@@ -204,13 +204,13 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                 const PostData = await client.database.getState(`/${parentPerm}/@${author}/${permLink}`)
                 const PostDetails = Object.values(PostData.content)[0]
                 const PostCreateDate = Date.parse(new Date(PostDetails.created).toISOString())
-                const MinuteDiff = ((Math.floor((new Date()).getTime() / 1000) - PostCreateDate / 1000) / 1000) / 6
+                const MinuteDiff = (((new Date().getTime() - PostCreateDate) / 1000) / 60) - Math.abs(new Date().getTimezoneOffset())
                 const postValue = Number(PostDetails.pending_payout_value.replace(' SBD', ''))
                 const acceptingPayment = Number(PostDetails.max_accepted_payout.replace(' SBD', ''))
                 const totalVoters = PostDetails.active_votes.length
 
                 console.log(`Inspection time for ${yt('@' + author)}!`)
-                console.log(`Content-Age: ${yt(round(MinuteDiff, 2))} -- Value: ${yt(postValue)} -- voters: ${yt(totalVoters)}`)
+                console.log(`Content-Age: ${MinuteDiff} -- Value: ${yt(postValue)} -- voters: ${yt(totalVoters)}`)
 
                 let votesignal = true
                 PostDetails.active_votes.forEach(voter => {
@@ -236,7 +236,7 @@ const setSchedule = (time, contentType, author, parentPerm, permLink, avgValue, 
                     console.log(`---------------------`)
                     voteNow(author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, onlineVotersList);
                 } else if (votesignal === false) {
-                    console.log(rt(`Already voted here!`))
+                    console.log(rt(`Already voted here! / Author has voted here!`))
                 } else {
                     console.log(rt(`Not profitable to vote! =(`))
                     console.log(`---------------------`)
@@ -261,7 +261,7 @@ const ScheduleFlag = async (operationDetails, type) => {
     const postDetails = Object.values(postData.content)[0]
     const postCreateDate = Date.parse(new Date(postDetails.created).toISOString())
     const currentVoters = postDetails.active_votes.length
-    const minuteDiff = ((Math.floor((new Date()).getTime() / 1000) - postCreateDate / 1000) / 1000) / 6
+    const minuteDiff = (((new Date().getTime() - postCreateDate) / 1000) / 60) - Math.abs(new Date().getTimezoneOffset())
     const authorState = await client.database.getState(`/@${author}`)
     const authorDetails = Object.values(authorState.accounts)[0]
     const authorRep = steem.formatter.reputation(authorDetails.reputation)
