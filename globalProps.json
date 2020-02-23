@@ -2,19 +2,11 @@
     "USERLIST" : [
         ["username_here", "KEY_HERE"]
     ],
-    "MINVOTINGPOWER" : 97,
-    "VOTEWEIGHT" : 1250,
-    "MINPOSTAGE" : 3.93,
-    "MINAVGVALUE" : 2,
-    "PROFITMIN" : 0.001,
-    "MAXVOTERS" : 5,
+    "MINAVGPOST" : 0.1,
+    "MINAVGCOMMENT" : 0.333,
     "MINREP" : 35,
     "MAXACTIVEPOSTS" : 7,
-    "MINAVGCOMMENT" : 1,
-    "COMMENTBUFFER" : 0.6,
-    "ALWAYSON" : true,
-    "ALWAYSONMINAVG" : 1,
-    "ALWAYSONVP" : 96,
-    "ALWAYSONTIME": 29.5,
-    "SPGAINREFRESH" : 15
+    "PROFITMIN" : -10,
+    "MAXVOTERS" : 5,
+    "VOTEWEIGHT" : 1250
 }
