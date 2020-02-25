@@ -1,12 +1,20 @@
-module.exports =  globalState = {
+const fs = require('fs');
+
+const { TRACKERS, GLOBALVARS } = JSON.parse(fs.readFileSync('./globalProps.json'));
+
+module.exports = globalState = {
+    globalVars : { ...GLOBALVARS },
+    
     system : {
+        timeFrames : ['mins5', 'mins15', 'mins30', 'mins45', 'mins60', 'mins120', 'mins240', 'mins360', 'mins480'],
         startTime : new Date(),
         blockCounter : 0,
         votingSteemPower : 0,
         startSP : 0,
         votingPower : 0,
         pendingAuthorList : [],
-        fails : 0
+        fails : 0,
+        operationInspections : 0
     },
 
     trackers : {
@@ -17,10 +25,10 @@ module.exports =  globalState = {
         },
 
         mins5 : {
-            minVP : 97,
+            minVP : TRACKERS.MINS5.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 3.98,
+            scheduleTime : TRACKERS.MINS5.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -36,10 +44,10 @@ module.exports =  globalState = {
         },
 
         mins15 : {
-            minVP : 96.5,
+            minVP : TRACKERS.MINS15.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 14.88,
+            scheduleTime : TRACKERS.MINS15.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -55,10 +63,10 @@ module.exports =  globalState = {
         },
 
         mins30 : {
-            minVP : 96,
+            minVP : TRACKERS.MINS30.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 29.88,
+            scheduleTime : TRACKERS.MINS30.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -74,10 +82,10 @@ module.exports =  globalState = {
         },
 
         mins45 : {
-            minVP : 95.5,
+            minVP : TRACKERS.MINS45.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 44.88,
+            scheduleTime : TRACKERS.MINS45.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -93,10 +101,10 @@ module.exports =  globalState = {
         },
 
         mins60 : {
-            minVP : 95,
+            minVP : TRACKERS.MINS60.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 59.88,
+            scheduleTime : TRACKERS.MINS60.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -112,10 +120,10 @@ module.exports =  globalState = {
         },
 
         mins120 : {
-            minVP : 94.5,
+            minVP : TRACKERS.MINS120.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 121.88,
+            scheduleTime : TRACKERS.MINS120.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -131,10 +139,10 @@ module.exports =  globalState = {
         },
 
         mins240 : {
-            minVP : 94,
+            minVP : TRACKERS.MINS240.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 239.88,
+            scheduleTime : TRACKERS.MINS240.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -150,10 +158,10 @@ module.exports =  globalState = {
         },
 
         mins360 : {
-            minVP : 93.5,
+            minVP : TRACKERS.MINS360.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 359.88,
+            scheduleTime : TRACKERS.MINS360.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,
@@ -169,10 +177,10 @@ module.exports =  globalState = {
         },
 
         mins480 : {
-            minVP : 93,
+            minVP : TRACKERS.MINS480.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : 479.88,
+            scheduleTime : TRACKERS.MINS480.SCHEDULETIME,
             posts : {
                 errors: 0,
                 votes: 0,

@@ -2,11 +2,54 @@
     "USERLIST" : [
         ["username_here", "KEY_HERE"]
     ],
-    "MINAVGPOST" : 0.1,
-    "MINAVGCOMMENT" : 0.333,
-    "MINREP" : 35,
-    "MAXACTIVEPOSTS" : 7,
-    "PROFITMIN" : -10,
-    "MAXVOTERS" : 5,
-    "VOTEWEIGHT" : 1250
+
+    "GLOBALVARS" : {
+        "MINAVGPOST" : 1,
+        "MINAVGCOMMENT" : 0.5,
+        "ACTIVATECOMMENTS" : true,
+        "MINREP" : 35,
+        "MAXACTIVEPOSTS" : 7,
+        "PROFITMIN" : -10,
+        "MAXVOTERS" : 5,
+        "VOTEWEIGHT" : 1250
+    },
+
+    "TRACKERS" : {
+        "MINS5" : {
+            "MINVP" : 97,
+            "SCHEDULETIME" : 3.98
+        },
+        "MINS15" : {
+            "MINVP" : 96.5,
+            "SCHEDULETIME" : 14.88
+        },
+        "MINS30" : {
+            "MINVP" : 96,
+            "SCHEDULETIME" : 29.88
+        },
+        "MINS45" : {
+            "MINVP" : 95.5,
+            "SCHEDULETIME" : 44.88
+        },
+        "MINS60" : {
+            "MINVP" : 95,
+            "SCHEDULETIME" : 59.88
+        },
+        "MINS120" : {
+            "MINVP" : 94.5,
+            "SCHEDULETIME" : 119.88
+        },
+        "MINS240" : {
+            "MINVP" : 94,
+            "SCHEDULETIME" : 239.88
+        },
+        "MINS360" : {
+            "MINVP" : 93.5,
+            "SCHEDULETIME" : 359.88
+        },
+        "MINS480" : {
+            "MINVP" : 93,
+            "SCHEDULETIME" : 479.88
+        }
+    }
 }
