@@ -38,24 +38,10 @@ stream.pipe(es.map(async (block, callback) => {
     actions.setGlobalOnlineLists(globalState);
 
     let voteStatus = actions.gt(`Recharging Steem Power...`)
-    if (globalState.system.votingPower >= globalState.trackers.mins5.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins5.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins15.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins15.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins30.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins30.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins45.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins45.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins60.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins60.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins120.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins120.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins240.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins240.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins360.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins360.scheduleTime} min inspections`)
-    } else if (globalState.system.votingPower >= globalState.trackers.mins480.minVP) {
-        voteStatus = actions.gt(`Scheduling ${globalState.trackers.mins480.scheduleTime} min inspections`)
+    for (timeFrame of [...globalState.system.timeFrames].reverse()) {
+        if (globalState.system.votingPower > globalState.trackers[timeFrame].minVP) {
+            voteStatus = actions.gt(`Scheduling ${globalState.trackers[timeFrame].scheduleTime} min posts`);
+        }
     }
 
     const data = block.transactions
@@ -71,15 +57,12 @@ stream.pipe(es.map(async (block, callback) => {
 
     console.log(`${actions.yt('*')} Status: ${voteStatus} || Run-time: ${actions.yt(actions.round((new Date() - globalState.system.startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${actions.yt(actions.round(globalState.system.votingPower, 3) + '%')} || Block Catch Ratio: ${blockCatchRatio}`)
     console.log(`${actions.yt('*')} Block-ID: ${actions.yt(blockId)} || ${actions.yt(globalState.system.blockCounter)} blocks inspected! || ${actions.yt(globalState.system.operationInspections)} operations inspected!`)
-    console.log();
     console.log(`${actions.yt('*')} Accounts Linked: ${actions.yt(userNamesList.length)} || Total SP voting: ${actions.yt(globalState.system.votingSteemPower)} || Run-time SP Gain: ${actions.yt(runtimeSPGain)}`)
-    console.log(`└─| Base VoteWeight: ${actions.yt((globalState.globalVars.VOTEWEIGHT / 100) + '%')} || Min Value Post: ${actions.yt(globalState.globalVars.MINAVGPOST)} || Min Value Comment: ${actions.yt(globalState.globalVars.MINAVGCOMMENT)}`)
     console.log()
 
     actions.logTrackers(globalState)
     console.log(`└─| Offline voters: ${actions.yt(Object.keys(globalState.trackers.offline.offlineVoters).length)} ==> [${actions.displayVotingPower(globalState.trackers.offline.offlineVoters)}]`)
     console.log(`${actions.yt('----------------------------------------------------------------------')}`)
-    
 
     data.forEach(async trans => {
         const operations = trans.operations
@@ -87,7 +70,7 @@ stream.pipe(es.map(async (block, callback) => {
         const operationDetails = operations[0][1]
 
         if (typeOf === 'comment' && operationDetails.parent_author === '') {
-            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'post')
+            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'posts')
             if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
                 answer.timeFrame.push(answer.author)
                 globalState.system.pendingAuthorList.push(answer.author)
@@ -97,10 +80,10 @@ stream.pipe(es.map(async (block, callback) => {
                 console.log(`Content-link: ${actions.yt(answer.link)}`)
 
                 let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
-                actions.setSchedule(globalState, scheduleTime, 'post', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+                actions.setSchedule(globalState, scheduleTime, 'posts', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
             }
         } else if (typeOf === 'comment' && operationDetails.parent_author != '' && globalState.globalVars.ACTIVATECOMMENTS === true) {
-            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'comment')
+            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'comments')
             if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
                 answer.timeFrame.push(answer.author)
                 globalState.system.pendingAuthorList.push(answer.author)
@@ -110,7 +93,7 @@ stream.pipe(es.map(async (block, callback) => {
                 console.log(`Content-link: ${actions.yt(answer.link)}`)
 
                 let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
-                actions.setSchedule(globalState, scheduleTime, 'comment', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+                actions.setSchedule(globalState, scheduleTime, 'comments', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
             }
         }
     })

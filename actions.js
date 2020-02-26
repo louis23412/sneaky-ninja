@@ -73,7 +73,7 @@ const displayTracker = (list) => {
 //----------------------------------------------------
 const logTrackers = (globalState) => {
     for (timeRange of globalState.system.timeFrames) {
-        console.log(`${yt('*')} ${timeRange} voters (${yt(globalState.trackers[timeRange].minVP)}++): ${yt(Object.keys(globalState.trackers[timeRange].votingTracker).length)} ==> [${displayVotingPower(globalState.trackers[timeRange].votingTracker)}]`)
+        console.log(`${yt('*')} ST(${yt(globalState.trackers[timeRange].scheduleTime)}) BVW(${yt(globalState.trackers[timeRange].baseWeight / 100)}) MVP(${yt(globalState.trackers[timeRange].minVP)}++) MAP(${yt(globalState.trackers[timeRange].posts.minAvg)}) MAC(${yt(globalState.trackers[timeRange].comments.minAvg)}) Active voters: ${yt(Object.keys(globalState.trackers[timeRange].votingTracker).length)} ==> [${displayVotingPower(globalState.trackers[timeRange].votingTracker)}]`)
         console.log(`└─| Post Votes: ${yt(globalState.trackers[timeRange].posts.votes)} || Post Vote Fails: ${yt(globalState.trackers[timeRange].posts.errors)} || Comment Votes: ${yt(globalState.trackers[timeRange].comments.votes)} || Comment Vote Fails: ${yt(globalState.trackers[timeRange].comments.errors)}`)
         console.log(`└─| Post Inspections: ${yt(globalState.trackers[timeRange].posts.inspections)} || Pending Post Inspections: ${yt(globalState.trackers[timeRange].posts.pendingInspections.length)} ==> [${displayTracker(globalState.trackers[timeRange].posts.pendingInspections)}]`)
         console.log(`└─| Comment Inspections: ${yt(globalState.trackers[timeRange].comments.inspections)} || Pending Comment Inspections: ${yt(globalState.trackers[timeRange].comments.pendingInspections.length)} ==> [${displayTracker(globalState.trackers[timeRange].comments.pendingInspections)}]`)
@@ -83,51 +83,56 @@ const logTrackers = (globalState) => {
 
 const setGlobalOnlineLists = (globalState) => {
     globalState.trackers.onlineVotersList = {
-        mins5List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList).includes(voter[0])) {
+        ONE : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins15List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList).includes(voter[0])) {
+        TWO : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins30List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList).includes(voter[0])) {
+        THREE : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins45List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList).includes(voter[0])) {
+        FOUR : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins60List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList, globalState.trackers.mins60.onlineList).includes(voter[0])) {
+        FIVE : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins120List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList, globalState.trackers.mins60.onlineList, globalState.trackers.mins120.onlineList).includes(voter[0])) {
+        SIX : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList, globalState.trackers.SIX.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins240List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList, globalState.trackers.mins60.onlineList, globalState.trackers.mins120.onlineList, globalState.trackers.mins240.onlineList).includes(voter[0])) {
+        SEVEN : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList, globalState.trackers.SIX.onlineList, globalState.trackers.SEVEN.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins360List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList, globalState.trackers.mins60.onlineList, globalState.trackers.mins120.onlineList, globalState.trackers.mins240.onlineList, globalState.trackers.mins360.onlineList).includes(voter[0])) {
+        EIGHT : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList, globalState.trackers.SIX.onlineList, globalState.trackers.SEVEN.onlineList, globalState.trackers.EIGHT.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
-        mins480List : USERLIST.filter(voter => {
-            if ([].concat(globalState.trackers.mins5.onlineList, globalState.trackers.mins15.onlineList, globalState.trackers.mins30.onlineList, globalState.trackers.mins45.onlineList, globalState.trackers.mins60.onlineList, globalState.trackers.mins120.onlineList, globalState.trackers.mins240.onlineList, globalState.trackers.mins360.onlineList, globalState.trackers.mins480.onlineList).includes(voter[0])) {
+        NINE : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList, globalState.trackers.SIX.onlineList, globalState.trackers.SEVEN.onlineList, globalState.trackers.EIGHT.onlineList, globalState.trackers.NINE.onlineList).includes(voter[0])) {
                 return voter
             }
         }),
+        TEN : USERLIST.filter(voter => {
+            if ([].concat(globalState.trackers.ONE.onlineList, globalState.trackers.TWO.onlineList, globalState.trackers.THREE.onlineList, globalState.trackers.FOUR.onlineList, globalState.trackers.FIVE.onlineList, globalState.trackers.SIX.onlineList, globalState.trackers.SEVEN.onlineList, globalState.trackers.EIGHT.onlineList, globalState.trackers.NINE.onlineList, globalState.trackers.TEN.onlineList).includes(voter[0])) {
+                return voter
+            }
+        })
     }
 }
 
@@ -147,68 +152,75 @@ const getVP = async (globalState) => {
         }
     }
 
-    for (time in globalState.trackers) {
-        if (time != 'offline') {
-            globalState.trackers[time].votingTracker = {}
-            globalState.trackers[time].onlineList = []
-        } else if (time === 'offline') {
-            globalState.trackers.offline.offlineVoters = {}
+    if (globalState.system.blockCounter % 5 === 0) {
+        for (time in globalState.trackers) {
+            if (time != 'offline') {
+                globalState.trackers[time].votingTracker = {}
+                globalState.trackers[time].onlineList = []
+            } else if (time === 'offline') {
+                globalState.trackers.offline.offlineVoters = {}
+            }
         }
-    }
 
-    let tempTracker = {}
-    for (userName of userNamesList) {
-        tempTracker[userName] = await rcapi.getVPMana(userName)
-    }
+        let tempTracker = {}
+        for (userName of userNamesList) {
+            tempTracker[userName] = await rcapi.getVPMana(userName)
+        }
 
-    for (value of Object.entries(tempTracker)) {
-        if (value[1].percentage / 100 >= globalState.trackers.mins5.minVP) {
-            globalState.trackers.mins5.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins5.onlineList.includes(value[0])) {
-                globalState.trackers.mins5.onlineList.push(value[0])
+        for (value of Object.entries(tempTracker)) {
+            if (value[1].percentage / 100 >= globalState.trackers.ONE.minVP) {
+                globalState.trackers.ONE.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.ONE.onlineList.includes(value[0])) {
+                    globalState.trackers.ONE.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.TWO.minVP) {
+                globalState.trackers.TWO.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.TWO.onlineList.includes(value[0])) {
+                    globalState.trackers.TWO.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.THREE.minVP) {
+                globalState.trackers.THREE.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.THREE.onlineList.includes(value[0])) {
+                    globalState.trackers.THREE.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.FOUR.minVP) {
+                globalState.trackers.FOUR.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.FOUR.onlineList.includes(value[0])) {
+                    globalState.trackers.FOUR.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.FIVE.minVP) {
+                globalState.trackers.FIVE.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.FIVE.onlineList.includes(value[0])) {
+                    globalState.trackers.FIVE.onlineList.push(value[0])
+                }
+            }else if (value[1].percentage / 100 >= globalState.trackers.SIX.minVP) {
+                globalState.trackers.SIX.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.SIX.onlineList.includes(value[0])) {
+                    globalState.trackers.SIX.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.SEVEN.minVP) {
+                globalState.trackers.SEVEN.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.SEVEN.onlineList.includes(value[0])) {
+                    globalState.trackers.SEVEN.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.EIGHT.minVP) {
+                globalState.trackers.EIGHT.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.EIGHT.onlineList.includes(value[0])) {
+                    globalState.trackers.EIGHT.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.NINE.minVP) {
+                globalState.trackers.NINE.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.NINE.onlineList.includes(value[0])) {
+                    globalState.trackers.NINE.onlineList.push(value[0])
+                }
+            } else if (value[1].percentage / 100 >= globalState.trackers.TEN.minVP) {
+                globalState.trackers.TEN.votingTracker[value[0]] = value[1]
+                if (!globalState.trackers.TEN.onlineList.includes(value[0])) {
+                    globalState.trackers.TEN.onlineList.push(value[0])
+                }
+            } else {
+                globalState.trackers.offline.offlineVoters[value[0]] = value[1]
             }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins15.minVP) {
-            globalState.trackers.mins15.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins15.onlineList.includes(value[0])) {
-                globalState.trackers.mins15.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins30.minVP) {
-            globalState.trackers.mins30.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins30.onlineList.includes(value[0])) {
-                globalState.trackers.mins30.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins45.minVP) {
-            globalState.trackers.mins45.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins45.onlineList.includes(value[0])) {
-                globalState.trackers.mins45.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins60.minVP) {
-            globalState.trackers.mins60.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins60.onlineList.includes(value[0])) {
-                globalState.trackers.mins60.onlineList.push(value[0])
-            }
-        }else if (value[1].percentage / 100 >= globalState.trackers.mins120.minVP) {
-            globalState.trackers.mins120.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins120.onlineList.includes(value[0])) {
-                globalState.trackers.mins120.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins240.minVP) {
-            globalState.trackers.mins240.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins240.onlineList.includes(value[0])) {
-                globalState.trackers.mins240.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins360.minVP) {
-            globalState.trackers.mins360.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins360.onlineList.includes(value[0])) {
-                globalState.trackers.mins360.onlineList.push(value[0])
-            }
-        } else if (value[1].percentage / 100 >= globalState.trackers.mins480.minVP) {
-            globalState.trackers.mins480.votingTracker[value[0]] = value[1]
-            if (!globalState.trackers.mins480.onlineList.includes(value[0])) {
-                globalState.trackers.mins480.onlineList.push(value[0])
-            }
-        } else {
-            globalState.trackers.offline.offlineVoters[value[0]] = value[1]
         }
     }
 
@@ -234,61 +246,7 @@ const voteNow = (globalState, author, postperm, link, age, blockid, type, voteWe
         const wif = steem.auth.toWif(userToVote[0], userToVote[1], 'posting');
         steem.broadcast.vote(wif, userToVote[0], author, postperm, voteWeight, (err, result) => {
             if (err) {
-                if (timeName === '5mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins5.posts.errors++
-                    } else {
-                        globalState.trackers.mins5.comments.errors++
-                    }
-                } else if (timeName === '15mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins15.posts.errors++
-                    } else {
-                        globalState.trackers.mins15.comments.errors++
-                    }
-                } else if (timeName === '30mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins30.posts.errors++
-                    } else {
-                        globalState.trackers.mins30.comments.errors++
-                    }
-                } else if (timeName === '45mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins45.posts.errors++
-                    } else {
-                        globalState.trackers.mins45.comments.errors++
-                    }
-                } else if (timeName === '60mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins60.posts.errors++
-                    } else {
-                        globalState.trackers.mins60.comments.errors++
-                    }
-                } else if (timeName === '120mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins120.posts.errors++
-                    } else {
-                        globalState.trackers.mins120.comments.errors++
-                    }
-                } else if (timeName === '240mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins240.posts.errors++
-                    } else {
-                        globalState.trackers.mins240.comments.errors++
-                    }
-                } else if (timeName === '360mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins360.posts.errors++
-                    } else {
-                        globalState.trackers.mins360.comments.errors++
-                    }
-                } else if (timeName === '480mins') {
-                    if (type === 'post') {
-                        globalState.trackers.mins480.posts.errors++
-                    } else {
-                        globalState.trackers.mins480.comments.errors++
-                    }
-                }
+                globalState.trackers[timeName][type].errors++
                 fs.appendFileSync('./logs/errorlog.txt', `${err}\n`)
             } else {
                 console.log(gt(`Vote success with a voteweight of ${(voteWeight) / 100}%!`));
@@ -299,68 +257,8 @@ const voteNow = (globalState, author, postperm, link, age, blockid, type, voteWe
         updatedUserListToVote.splice(0, 1);
         voteNow(globalState, author, postperm, link, age, blockid, type, voteWeight, updatedUserListToVote, timeName);
     } else if (newUserList.length === 0 ) {
+        globalState.trackers[timeName][type].votes++
         fs.appendFileSync('./logs/votelog.txt', `AUTHOR: ${author} -- LINK: ${link} -- DATE: ${new Date()} -- VOTED AFTER: ${age} mins -- Block-Id: ${blockid}\n---------------------------\n`)
-        if (timeName === '5mins') {
-            if (type === 'post') {
-                globalState.trackers.mins5.posts.votes++
-            } else {
-                globalState.trackers.mins5.comments.votes++
-            }
-        } else if (timeName === '15mins') {
-            if (type === 'post') {
-                globalState.trackers.mins15.posts.votes++
-            } else {
-                globalState.trackers.mins15.comments.votes++
-            }
-        } else if (timeName === '15mins') {
-            if (type === 'post') {
-                globalState.trackers.mins15.posts.votes++
-            } else {
-                globalState.trackers.mins15.comments.votes++
-            }
-        } else if (timeName === '30mins') {
-            if (type === 'post') {
-                globalState.trackers.mins30.posts.votes++
-            } else {
-                globalState.trackers.mins30.comments.votes++
-            }
-        } else if (timeName === '45mins') {
-            if (type === 'post') {
-                globalState.trackers.mins45.posts.votes++
-            } else {
-                globalState.trackers.mins45.comments.votes++
-            }
-        } else if (timeName === '60mins') {
-            if (type === 'post') {
-                globalState.trackers.mins60.posts.votes++
-            } else {
-                globalState.trackers.mins60.comments.votes++
-            }
-        } else if (timeName === '120mins') {
-            if (type === 'post') {
-                globalState.trackers.mins120.posts.votes++
-            } else {
-                globalState.trackers.mins120.comments.votes++
-            }
-        } else if (timeName === '240mins') {
-            if (type === 'post') {
-                globalState.trackers.mins240.posts.votes++
-            } else {
-                globalState.trackers.mins240.comments.votes++
-            }
-        } else if (timeName === '360mins') {
-            if (type === 'post') {
-                globalState.trackers.mins360.posts.votes++
-            } else {
-                globalState.trackers.mins360.comments.votes++
-            }
-        } else if (timeName === '480mins') {
-            if (type === 'post') {
-                globalState.trackers.mins480.posts.votes++
-            } else {
-                globalState.trackers.mins480.comments.votes++
-            }
-        }
     }
 }
 
@@ -377,61 +275,7 @@ const setSchedule = (globalState, time, contentType, author, parentPerm, permLin
                 globalState.system.pendingAuthorList.splice(index2, 1)
             }
 
-            if (timeName === '5mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins5.posts.inspections++
-                } else {
-                    globalState.trackers.mins5.comments.inspections++
-                }
-            } else if (timeName === '15mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins15.posts.inspections++
-                } else {
-                    globalState.trackers.mins15.comments.inspections++
-                }
-            } else if (timeName === '30mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins30.posts.inspections++
-                } else {
-                    globalState.trackers.mins30.comments.inspections++
-                }
-            } else if (timeName === '45mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins45.posts.inspections++
-                } else {
-                    globalState.trackers.mins45.comments.inspections++
-                }
-            } else if (timeName === '60mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins60.posts.inspections++
-                } else {
-                    globalState.trackers.mins60.comments.inspections++
-                }
-            } else if (timeName === '120mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins120.posts.inspections++
-                } else {
-                    globalState.trackers.mins120.comments.inspections++
-                }
-            } else if (timeName === '240mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins240.posts.inspections++
-                } else {
-                    globalState.trackers.mins240.comments.inspections++
-                }
-            } else if (timeName === '360mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins360.posts.inspections++
-                } else {
-                    globalState.trackers.mins360.comments.inspections++
-                }
-            } else if (timeName === '480mins') {
-                if (contentType === 'post') {
-                    globalState.trackers.mins480.posts.inspections++
-                } else {
-                    globalState.trackers.mins480.comments.inspections++
-                }
-            }
+            globalState.trackers[timeName][contentType].inspections++
 
             const PostData = await client.database.getState(`/${parentPerm}/@${author}/${permLink}`)
             const PostDetails = Object.values(PostData.content)[0]
@@ -452,101 +296,19 @@ const setSchedule = (globalState, time, contentType, author, parentPerm, permLin
             })
 
             if (totalVoters <= globalState.globalVars.MAXVOTERS && (postValue / avgValue) <= 0.025 && votesignal === true && acceptingPayment > 0) {
-                let newVoteWeight = Math.round(globalState.globalVars.VOTEWEIGHT * avgValue)
+                let newVoteWeight = Math.round(globalState.trackers[timeName].baseWeight * avgValue)
                 if (newVoteWeight > 10000) {
                     newVoteWeight = 10000;
                 }
 
-                if (timeName === '5mins') {
-                    if (globalState.trackers.onlineVotersList.mins5List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins5List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins5List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '15mins') {
-                    if (globalState.trackers.onlineVotersList.mins15List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins15List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins15List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '30mins') {
-                    if (globalState.trackers.onlineVotersList.mins30List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins30List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins30List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '45mins') {
-                    if (globalState.trackers.onlineVotersList.mins45List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins45List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins45List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '60mins') {
-                    if (globalState.trackers.onlineVotersList.mins60List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins60List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins60List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '120mins') {
-                    if (globalState.trackers.onlineVotersList.mins120List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins120List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins120List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '240mins') {
-                    if (globalState.trackers.onlineVotersList.mins240List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins240List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins240List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '360mins') {
-                    if (globalState.trackers.onlineVotersList.mins360List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins360List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins360List, timeName);
-                    } else {
-                        console.log(rt('No accounts available to vote!'))
-                    }
-                } else if (timeName === '480mins') {
-                    if (globalState.trackers.onlineVotersList.mins480List.length > 0) {
-                        const linkList = link.split('/')
-                        const postPerm = linkList[linkList.length -1]
-                        console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList.mins480List.length} accounts...`))
-                        console.log(`---------------------`)
-                        voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList.mins480List, timeName);
-                    } else {
-                        console.log(rt('No accounts availbe to vote!'))
-                    }
+                if (globalState.trackers.onlineVotersList[timeName].length > 0) {
+                    const linkList = link.split('/')
+                    const postPerm = linkList[linkList.length -1]
+                    console.log(gt(`VOTE OPPORTUNITY DETECTED! Broadcasting now with ${globalState.trackers.onlineVotersList[timeName].length} accounts...`))
+                    console.log(`---------------------`)
+                    voteNow(globalState, author, postPerm, link, MinuteDiff, blockId, contentType, newVoteWeight, globalState.trackers.onlineVotersList[timeName], timeName);
+                } else {
+                    console.log(rt('No accounts available to vote!'))
                 }
             } else if (votesignal === false) {
                 console.log(rt(`Already voted here! / Author has voted here!`))
@@ -577,7 +339,7 @@ const ScheduleFlag = async (globalState, operationDetails, type) => {
 
     globalState.system.operationInspections++
 
-    if (type === 'comment') {
+    if (type === 'comments') {
         dataToGet = await client.database.getState(`/@${author}/comments`)
         authorContent = Object.values(dataToGet.content)
     }
@@ -605,225 +367,60 @@ const ScheduleFlag = async (globalState, operationDetails, type) => {
 
     const percentile = calculateProfit(valueData, avgValue);
 
-    let votesignal = false
-    if (type === 'post') {
+    let timeFrame = ''
+    let scheduleTime = ''
+    let timeName = ''
+
+    if (type === 'posts') {
         fs.appendFileSync('./logs/signalLog.txt', `Inspecting post ==> AUTHOR: https://steemit.com/@${author}/posts -- REP:${authorRep} -- Post Count:${postCount} -- Current Voters:${currentVoters} -- Proftit Chance:${percentile} -- Avg Value:${avgValue}\n`)
-        if (authorRep >= globalState.globalVars.MINREP && postCount <= globalState.globalVars.MAXACTIVEPOSTS
-            && avgValue >= globalState.globalVars.MINAVGPOST && percentile >= globalState.globalVars.PROFITMIN 
-            && currentVoters <= globalState.globalVars.MAXVOTERS ) {
-                votesignal = true;
+        for (timeFrame of globalState.system.timeFrames) {
+            if (authorRep >= globalState.globalVars.MINREP && postCount <= globalState.globalVars.MAXACTIVEPOSTS 
+                && avgValue >= globalState.trackers[timeFrame].posts.minAvg && percentile >= globalState.globalVars.PROFITMIN
+                && currentVoters <= globalState.globalVars.MAXVOTERS) {
+                    scheduleTime = globalState.trackers[timeFrame].scheduleTime
+                    timeName = timeFrame
+                    timeFrame = globalState.trackers[timeFrame].posts.pendingInspections
+
+                    return {
+                        signal : true,
+                        author : author,
+                        avg : avgValue,
+                        link : link,
+                        parentPerm : parentPermLink,
+                        age : minuteDiff,
+                        perm : permlink,
+                        timeFrame : timeFrame,
+                        scheduleTime : scheduleTime,
+                        timeName : timeName
+                    }
+                }
         }
-    } else if (type === 'comment') {
+        return {signal : false}
+    } else if (type === 'comments') {
         fs.appendFileSync('./logs/signalLog.txt', `Inspecting comment ==> AUTHOR: https://steemit.com/@${author}/comments -- REP:${authorRep} -- Post Count:${postCount} -- Current Voters:${currentVoters} -- Proftit Chance:${percentile} -- Avg Value:${avgValue}\n`)
-        if (authorRep >= globalState.globalVars.MINREP && avgValue >= globalState.globalVars.MINAVGCOMMENT
-            && currentVoters <= globalState.globalVars.MAXVOTERS && percentile >= globalState.globalVars.PROFITMIN) {
-                votesignal = true;
+        for (timeFrame of globalState.system.timeFrames) {
+            if (authorRep >= globalState.globalVars.MINREP && postCount <= globalState.globalVars.MAXACTIVEPOSTS 
+                && avgValue >= globalState.trackers[timeFrame].comments.minAvg && percentile >= globalState.globalVars.PROFITMIN
+                && currentVoters <= globalState.globalVars.MAXVOTERS) {
+                    scheduleTime = globalState.trackers[timeFrame].scheduleTime
+                    timeName = timeFrame
+                    timeFrame = globalState.trackers[timeFrame].comments.pendingInspections
+
+                    return {
+                        signal : true,
+                        author : author,
+                        avg : avgValue,
+                        link : link,
+                        parentPerm : parentPermLink,
+                        age : minuteDiff,
+                        perm : permlink,
+                        timeFrame : timeFrame,
+                        scheduleTime : scheduleTime,
+                        timeName : timeName
+                    }
+                }
         }
-    }
-
-    if (votesignal === true) {
-        let timeFrame = ''
-        let scheduleTime = ''
-        let timeName = ''
-        if (globalState.trackers.mins5.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins5.scheduleTime
-            timeName = '5mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins5.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins5.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins15.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins15.scheduleTime
-            timeName = '15mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins15.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins15.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins30.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins30.scheduleTime
-            timeName = '30mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins30.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins30.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins45.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins45.scheduleTime
-            timeName = '45mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins45.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins45.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins60.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins60.scheduleTime
-            timeName = '60mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins60.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins60.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins120.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins120.scheduleTime
-            timeName = '120mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins120.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins120.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins240.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins240.scheduleTime
-            timeName = '240mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins240.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins240.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins360.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins360.scheduleTime
-            timeName = '360mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins360.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins360.comments.pendingInspections
-            }
-
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        } else if (globalState.trackers.mins480.onlineList.length > 0) {
-            scheduleTime = globalState.trackers.mins480.scheduleTime
-            timeName = '480mins'
-            if (type === 'post') {
-                timeFrame = globalState.trackers.mins480.posts.pendingInspections
-            } else {
-                timeFrame = globalState.trackers.mins480.comments.pendingInspections
-            }
-            return {
-                signal : true,
-                author : author,
-                avg : avgValue,
-                link : link,
-                parentPerm : parentPermLink,
-                age : minuteDiff,
-                perm : permlink,
-                timeFrame : timeFrame,
-                scheduleTime : scheduleTime,
-                timeName : timeName
-            }
-        }
-    } else {
-        return {
-            signal : false,
-            author : author,
-            avg : avgValue,
-            link : link,
-            parentPerm : parentPermLink,
-            age : minuteDiff,
-            perm : permlink
-        };
+        return {signal : false}
     }
 }
 //----------------------------------------------------

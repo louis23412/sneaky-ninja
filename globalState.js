@@ -6,7 +6,7 @@ module.exports = globalState = {
     globalVars : { ...GLOBALVARS },
     
     system : {
-        timeFrames : ['mins5', 'mins15', 'mins30', 'mins45', 'mins60', 'mins120', 'mins240', 'mins360', 'mins480'],
+        timeFrames : ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'],
         startTime : new Date(),
         blockCounter : 0,
         votingSteemPower : 0,
@@ -24,18 +24,21 @@ module.exports = globalState = {
             offlineVoters : {}
         },
 
-        mins5 : {
-            minVP : TRACKERS.MINS5.MINVP,
+        'ONE' : {
+            baseWeight : TRACKERS.ONE.BASEWEIGHT,
+            minVP : TRACKERS.ONE.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS5.SCHEDULETIME,
+            scheduleTime : TRACKERS.ONE.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.ONE.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.ONE.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -43,18 +46,21 @@ module.exports = globalState = {
             }
         },
 
-        mins15 : {
-            minVP : TRACKERS.MINS15.MINVP,
+        'TWO' : {
+            baseWeight : TRACKERS.TWO.BASEWEIGHT,
+            minVP : TRACKERS.TWO.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS15.SCHEDULETIME,
+            scheduleTime : TRACKERS.TWO.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.TWO.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.TWO.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -62,18 +68,21 @@ module.exports = globalState = {
             }
         },
 
-        mins30 : {
-            minVP : TRACKERS.MINS30.MINVP,
+        'THREE' : {
+            baseWeight : TRACKERS.THREE.BASEWEIGHT,
+            minVP : TRACKERS.THREE.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS30.SCHEDULETIME,
+            scheduleTime : TRACKERS.THREE.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.THREE.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.THREE.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -81,18 +90,21 @@ module.exports = globalState = {
             }
         },
 
-        mins45 : {
-            minVP : TRACKERS.MINS45.MINVP,
+        'FOUR' : {
+            baseWeight : TRACKERS.FOUR.BASEWEIGHT,
+            minVP : TRACKERS.FOUR.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS45.SCHEDULETIME,
+            scheduleTime : TRACKERS.FOUR.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.FOUR.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.FOUR.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -100,18 +112,21 @@ module.exports = globalState = {
             }
         },
 
-        mins60 : {
-            minVP : TRACKERS.MINS60.MINVP,
+        'FIVE' : {
+            baseWeight : TRACKERS.FIVE.BASEWEIGHT,
+            minVP : TRACKERS.FIVE.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS60.SCHEDULETIME,
+            scheduleTime : TRACKERS.FIVE.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.FIVE.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.FIVE.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -119,18 +134,21 @@ module.exports = globalState = {
             }
         },
 
-        mins120 : {
-            minVP : TRACKERS.MINS120.MINVP,
+        'SIX' : {
+            baseWeight : TRACKERS.SIX.BASEWEIGHT,
+            minVP : TRACKERS.SIX.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS120.SCHEDULETIME,
+            scheduleTime : TRACKERS.SIX.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.SIX.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.SIX.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -138,18 +156,21 @@ module.exports = globalState = {
             }
         },
 
-        mins240 : {
-            minVP : TRACKERS.MINS240.MINVP,
+        'SEVEN' : {
+            baseWeight : TRACKERS.SEVEN.BASEWEIGHT,
+            minVP : TRACKERS.SEVEN.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS240.SCHEDULETIME,
+            scheduleTime : TRACKERS.SEVEN.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.SEVEN.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.SEVEN.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -157,18 +178,21 @@ module.exports = globalState = {
             }
         },
 
-        mins360 : {
-            minVP : TRACKERS.MINS360.MINVP,
+        'EIGHT' : {
+            baseWeight : TRACKERS.EIGHT.BASEWEIGHT,
+            minVP : TRACKERS.EIGHT.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS360.SCHEDULETIME,
+            scheduleTime : TRACKERS.EIGHT.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.EIGHT.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.EIGHT.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
@@ -176,23 +200,48 @@ module.exports = globalState = {
             }
         },
 
-        mins480 : {
-            minVP : TRACKERS.MINS480.MINVP,
+        'NINE' : {
+            baseWeight : TRACKERS.NINE.BASEWEIGHT,
+            minVP : TRACKERS.NINE.MINVP,
             onlineList : [],
             votingTracker : {},
-            scheduleTime : TRACKERS.MINS480.SCHEDULETIME,
+            scheduleTime : TRACKERS.NINE.SCHEDULETIME,
             posts : {
+                minAvg : TRACKERS.NINE.MINAVGPOST,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             },
             comments: {
+                minAvg : TRACKERS.NINE.MINAVGCOMMENT,
                 errors: 0,
                 votes: 0,
                 inspections: 0,
                 pendingInspections: []
             }
         },
+
+        'TEN' : {
+            baseWeight : TRACKERS.TEN.BASEWEIGHT,
+            minVP : TRACKERS.TEN.MINVP,
+            onlineList : [],
+            votingTracker : {},
+            scheduleTime : TRACKERS.TEN.SCHEDULETIME,
+            posts : {
+                minAvg : TRACKERS.TEN.MINAVGPOST,
+                errors: 0,
+                votes: 0,
+                inspections: 0,
+                pendingInspections: []
+            },
+            comments: {
+                minAvg : TRACKERS.TEN.MINAVGCOMMENT,
+                errors: 0,
+                votes: 0,
+                inspections: 0,
+                pendingInspections: []
+            }
+        }
     }
 }
