@@ -7,7 +7,7 @@
         "ACTIVATECOMMENTS" : true,
         "MINREP" : 35,
         "MAXACTIVEPOSTS" : 7,
-        "PROFITMIN" : -10,
+        "PROFITMIN" : 0.001,
         "MAXVOTERS" : 5
     },
 

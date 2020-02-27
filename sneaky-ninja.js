@@ -37,10 +37,10 @@ stream.pipe(es.map(async (block, callback) => {
     }
     actions.setGlobalOnlineLists(globalState);
 
-    let voteStatus = actions.gt(`Recharging Steem Power...`)
+    let voteStatus = actions.rt(`Recharging Steem Power...`)
     for (timeFrame of [...globalState.system.timeFrames].reverse()) {
         if (globalState.system.votingPower > globalState.trackers[timeFrame].minVP) {
-            voteStatus = actions.gt(`Scheduling ${globalState.trackers[timeFrame].scheduleTime} min posts`);
+            voteStatus = actions.gt(`Prioritizing ${globalState.trackers[timeFrame].scheduleTime} min voters`);
         }
     }
 
@@ -58,6 +58,7 @@ stream.pipe(es.map(async (block, callback) => {
     console.log(`${actions.yt('*')} Status: ${voteStatus} || Run-time: ${actions.yt(actions.round((new Date() - globalState.system.startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${actions.yt(actions.round(globalState.system.votingPower, 3) + '%')} || Block Catch Ratio: ${blockCatchRatio}`)
     console.log(`${actions.yt('*')} Block-ID: ${actions.yt(blockId)} || ${actions.yt(globalState.system.blockCounter)} blocks inspected! || ${actions.yt(globalState.system.operationInspections)} operations inspected!`)
     console.log(`${actions.yt('*')} Accounts Linked: ${actions.yt(userNamesList.length)} || Total SP voting: ${actions.yt(globalState.system.votingSteemPower)} || Run-time SP Gain: ${actions.yt(runtimeSPGain)}`)
+    console.log(`${actions.yt('*')} Total Votes: ${actions.yt(globalState.system.totalVotes)} || Total Vote Fails: ${actions.yt(globalState.system.totalErrors)} || Total Inspections: ${actions.yt(globalState.system.totalInspections)}`)
     console.log()
 
     actions.logTrackers(globalState)
@@ -70,30 +71,38 @@ stream.pipe(es.map(async (block, callback) => {
         const operationDetails = operations[0][1]
 
         if (typeOf === 'comment' && operationDetails.parent_author === '') {
-            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'posts')
-            if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
-                answer.timeFrame.push(answer.author)
-                globalState.system.pendingAuthorList.push(answer.author)
-                console.log('Post Detected!')
-                console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
-                console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))}`)
-                console.log(`Content-link: ${actions.yt(answer.link)}`)
-
-                let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
-                actions.setSchedule(globalState, scheduleTime, 'posts', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+            try {
+                const answer = await actions.ScheduleFlag(globalState, operationDetails, 'posts')
+                if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
+                    answer.timeFrame.push(answer.author)
+                    globalState.system.pendingAuthorList.push(answer.author)
+                    console.log('Post Detected!')
+                    console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
+                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avgValue)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
+                    console.log(`Content-link: ${actions.yt(answer.link)}`)
+    
+                    let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
+                    actions.setSchedule(globalState, scheduleTime, 'posts', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+                }
+            } catch (err) {
+                console.log(actions.rt(`Post ScheduleFlag Error! -- ${err}`))
             }
         } else if (typeOf === 'comment' && operationDetails.parent_author != '' && globalState.globalVars.ACTIVATECOMMENTS === true) {
-            const answer = await actions.ScheduleFlag(globalState, operationDetails, 'comments')
-            if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
-                answer.timeFrame.push(answer.author)
-                globalState.system.pendingAuthorList.push(answer.author)
-                console.log('Comment Detected!')
-                console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
-                console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))}`)
-                console.log(`Content-link: ${actions.yt(answer.link)}`)
-
-                let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
-                actions.setSchedule(globalState, scheduleTime, 'comments', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+            try {
+                const answer = await actions.ScheduleFlag(globalState, operationDetails, 'comments')
+                if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
+                    answer.timeFrame.push(answer.author)
+                    globalState.system.pendingAuthorList.push(answer.author)
+                    console.log('Comment Detected!')
+                    console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
+                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avgValue)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
+                    console.log(`Content-link: ${actions.yt(answer.link)}`)
+    
+                    let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
+                    actions.setSchedule(globalState, scheduleTime, 'comments', answer.author, answer.parentPerm, answer.perm, answer.avg, answer.link, blockId, answer.timeFrame, answer.timeName);
+                }
+            } catch (err) {
+                console.log(actions.rt(`Comment ScheduleFlag Error! -- ${err}`))
             }
         }
     })

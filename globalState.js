@@ -14,7 +14,10 @@ module.exports = globalState = {
         votingPower : 0,
         pendingAuthorList : [],
         fails : 0,
-        operationInspections : 0
+        operationInspections : 0,
+        totalVotes : 0,
+        totalErrors : 0,
+        totalInspections : 0
     },
 
     trackers : {
