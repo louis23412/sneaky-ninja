@@ -28,21 +28,29 @@
    ```
    
 * Change the variables as needed:
-   ###### MINVOTINGPOWER -- The minimum voting power to vote
-   ###### VOTEWEIGHT -- The base voteweight used to determine the final voteweight
-   ###### MINPOSTAGE -- Minimum post/comment age
-   ###### MINAVGVALUE -- Minimum average value for the users active  posts
-   ###### PROFITMIN -- Minimum profit chance to trigger an inspection (Can be negative value - Example: 0.1 = 10%) 
-   ###### MAXVOTERS -- The max voters allowed to trigger a upvote
-   ###### MINREP -- Minimum user reputation
-   ###### MAXACTIVEPOSTS -- Maximum amount of active posts/comments for the user
-   ###### MINAVGCOMMENT -- The minimum average value for the users comments
-   ###### COMMENTBUFFER -- Used to determine the final voteweight on a users comment (Example: 0.6 = 60% of the final voteweight)
-   ###### ALWAYSON -- true or false, when set to true ALWAYSON voting will be active when above the minimum voting power.
-   ###### ALWAYSONMINAVG -- Minimum post value needed for the user to trigger a schedule for inspection
-   ###### ALWAYSONVP -- Minimum voting power needed to activate ALWAYSON voting.
-   ###### ALWAYSONTIME -- Minimum post age to set the schedule for inspection.
-   ###### SPGAINREFRESH -- The amount of blocks to pass before updating the SPGain tracker
+   ```
+   "GLOBALVARS" : {
+      "ACTIVATEPOSTS" : true, => true to activate post voting / false to disable.
+      "ACTIVATECOMMENTS" : true, => true to activate comment voting / false to disable.
+      "ACTIVATELOGGING" : true, => true to activate tracker logging runtime / false to disable.
+      "MINREP" : 35, => Minimum reputation for the author of the content (Post or Comment)
+      "MAXACTIVEPOSTS" : 7, => Max active posts in the last 7 days (Post or comment)
+      "PROFITMIN" : -10, => Minimum profit chance to trigger upvotes (Can be negative. Formula used to calculate: (((q1 + q2 + q3) / 3) - avgval) / avgval
+      "MAXVOTERS" : 5 => Max voters allowed on the content being inspected to trigger an upvote
+   }
+   ```
+
+* Set properties for each tracker. Example:
+   ```
+   "ONE" : {
+      "MINVP" : 97, => Min VP needed for this category
+      "SCHEDULETIME" : 3.98, => Min post age / schedule time for this category
+      "BASEWEIGHT" : 1500, => Divide by 100 to get weight %. Base weight used to determine the final vote Weight (Formula used: Base Weight * Average Value)
+      "MINAVGPOST" : 3, => Minimum Average post value for this category
+      "MINAVGCOMMENT" : 2 => Minimun Average comment value for this category
+   }
+   ```
+   Each tracking category should be higher in MinVp than the next! So tracker ONE minVP should be > than tracker TWO minVP. (The globalProps file provided comes with my current setup running as example.)
    
 * Save the config file, then run the bot <br>
    `npm start`
