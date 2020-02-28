@@ -30,7 +30,9 @@
 * Change the variables as needed:
    ```
    "GLOBALVARS" : {
-      "ACTIVATECOMMENTS" : true, => true to activate comment voting / false to deactivate
+      "ACTIVATEPOSTS" : true, => true to activate post voting / false to disable.
+      "ACTIVATECOMMENTS" : true, => true to activate comment voting / false to disable.
+      "ACTIVATELOGGING" : true, => true to activate tracker logging runtime / false to disable.
       "MINREP" : 35, => Minimum reputation for the author of the content (Post or Comment)
       "MAXACTIVEPOSTS" : 7, => Max active posts in the last 7 days (Post or comment)
       "PROFITMIN" : -10, => Minimum profit chance to trigger upvotes (Can be negative. Formula used to calculate: (((q1 + q2 + q3) / 3) - avgval) / avgval

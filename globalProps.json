@@ -4,7 +4,9 @@
     ],
 
     "GLOBALVARS" : {
+        "ACTIVATEPOSTS" : true,
         "ACTIVATECOMMENTS" : true,
+        "ACTIVATELOGGING" : true,
         "MINREP" : 35,
         "MAXACTIVEPOSTS" : 7,
         "PROFITMIN" : 0.001,

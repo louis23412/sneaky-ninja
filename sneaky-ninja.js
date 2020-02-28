@@ -58,19 +58,26 @@ stream.pipe(es.map(async (block, callback) => {
     console.log(`${actions.yt('*')} Status: ${voteStatus} || Run-time: ${actions.yt(actions.round((new Date() - globalState.system.startTime) / 1000 / 60, 2) + ' mins')} || Highest-VP: ${actions.yt(actions.round(globalState.system.votingPower, 3) + '%')} || Block Catch Ratio: ${blockCatchRatio}`)
     console.log(`${actions.yt('*')} Block-ID: ${actions.yt(blockId)} || ${actions.yt(globalState.system.blockCounter)} blocks inspected! || ${actions.yt(globalState.system.operationInspections)} operations inspected!`)
     console.log(`${actions.yt('*')} Accounts Linked: ${actions.yt(userNamesList.length)} || Total SP voting: ${actions.yt(globalState.system.votingSteemPower)} || Run-time SP Gain: ${actions.yt(runtimeSPGain)}`)
-    console.log(`${actions.yt('*')} Total Votes: ${actions.yt(globalState.system.totalVotes)} || Total Vote Fails: ${actions.yt(globalState.system.totalErrors)} || Total Inspections: ${actions.yt(globalState.system.totalInspections)}`)
+    console.log(`${actions.yt('*')} Total Votes: ${actions.yt(globalState.system.totalVotes)} || Total Vote Fails: ${actions.yt(globalState.system.totalErrors)} || Total Inspections: ${actions.yt(globalState.system.totalInspections)} || Total Pending inspections: ${actions.yt(globalState.system.pendingAuthorList.length)}`)
     console.log()
 
-    actions.logTrackers(globalState)
-    console.log(`└─| Offline voters: ${actions.yt(Object.keys(globalState.trackers.offline.offlineVoters).length)} ==> [${actions.displayVotingPower(globalState.trackers.offline.offlineVoters)}]`)
+    if (globalState.globalVars.ACTIVATELOGGING === true) {
+        actions.logTrackers(globalState)
+        console.log(`${actions.yt('*')} Offline voters: ${actions.yt(Object.keys(globalState.trackers.offline.offlineVoters).length)} ==> [${actions.displayVotingPower(globalState.trackers.offline.offlineVoters)}]`)
+    }
+
     console.log(`${actions.yt('----------------------------------------------------------------------')}`)
+
+    if (globalState.globalVars.ACTIVATEPOSTS === false && globalState.globalVars.ACTIVATECOMMENTS === false) {
+        console.log(actions.rt('Posts & comments are both disabled! Please activate atleast one.'))
+    }
 
     data.forEach(async trans => {
         const operations = trans.operations
         const typeOf = operations[0][0]
         const operationDetails = operations[0][1]
 
-        if (typeOf === 'comment' && operationDetails.parent_author === '') {
+        if (typeOf === 'comment' && operationDetails.parent_author === '' && globalState.globalVars.ACTIVATEPOSTS === true) {
             try {
                 const answer = await actions.ScheduleFlag(globalState, operationDetails, 'posts')
                 if (answer.signal === true && !globalState.system.pendingAuthorList.includes(answer.author)) {
@@ -78,7 +85,7 @@ stream.pipe(es.map(async (block, callback) => {
                     globalState.system.pendingAuthorList.push(answer.author)
                     console.log('Post Detected!')
                     console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
-                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avgValue)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
+                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avg)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
                     console.log(`Content-link: ${actions.yt(answer.link)}`)
     
                     let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)
@@ -95,7 +102,7 @@ stream.pipe(es.map(async (block, callback) => {
                     globalState.system.pendingAuthorList.push(answer.author)
                     console.log('Comment Detected!')
                     console.log(`In block: ${actions.yt(blockId)} | Match #: ${actions.yt(answer.timeFrame.length)}`)
-                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avgValue)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
+                    console.log(`Author: ${actions.yt(answer.author)} | Content-age: ${actions.yt(actions.round(answer.age, 2))} | Avg Value: ${actions.yt(answer.avg)} | Profit Chance: ${actions.yt(actions.round(answer.profitChance, 3) + '%')}`)
                     console.log(`Content-link: ${actions.yt(answer.link)}`)
     
                     let scheduleTime = (answer.scheduleTime * 60) * 1000 - ((answer.age * 60) * 1000)

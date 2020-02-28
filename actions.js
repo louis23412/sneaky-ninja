@@ -73,11 +73,11 @@ const displayTracker = (list) => {
 //----------------------------------------------------
 const logTrackers = (globalState) => {
     for (timeRange of globalState.system.timeFrames) {
-        console.log(`${yt('*')} Schedule Time: ${yt(globalState.trackers[timeRange].scheduleTime)} || Base VoteWeight: ${yt(globalState.trackers[timeRange].baseWeight / 100)} || Min VP:${yt(globalState.trackers[timeRange].minVP)}++ || Min Avg Post: ${yt(globalState.trackers[timeRange].posts.minAvg)} || Min Avg Comment: ${yt(globalState.trackers[timeRange].comments.minAvg)} => Post Votes: ${yt(globalState.trackers[timeRange].posts.votes)} || Post Vote Fails: ${yt(globalState.trackers[timeRange].posts.errors)} || Comment Votes: ${yt(globalState.trackers[timeRange].comments.votes)} || Comment Vote Fails: ${yt(globalState.trackers[timeRange].comments.errors)}`)
+        console.log(`${yt('*')} Schedule Time: ${yt(globalState.trackers[timeRange].scheduleTime)} || Base VoteWeight: ${yt(globalState.trackers[timeRange].baseWeight / 100)} || Min VP: ${yt(globalState.trackers[timeRange].minVP)}++ || Min Avg Post: ${yt(globalState.trackers[timeRange].posts.minAvg)} || Min Avg Comment: ${yt(globalState.trackers[timeRange].comments.minAvg)} => Post Votes: ${yt(globalState.trackers[timeRange].posts.votes)} || Post Vote Fails: ${yt(globalState.trackers[timeRange].posts.errors)} || Comment Votes: ${yt(globalState.trackers[timeRange].comments.votes)} || Comment Vote Fails: ${yt(globalState.trackers[timeRange].comments.errors)}`)
         console.log(`└─| Active voters: ${yt(Object.keys(globalState.trackers[timeRange].votingTracker).length)} ==> [${displayVotingPower(globalState.trackers[timeRange].votingTracker)}]`)
         console.log(`└─| Post Inspections: ${yt(globalState.trackers[timeRange].posts.inspections)} || Pending Post Inspections: ${yt(globalState.trackers[timeRange].posts.pendingInspections.length)} ==> [${displayTracker(globalState.trackers[timeRange].posts.pendingInspections)}]`)
         console.log(`└─| Comment Inspections: ${yt(globalState.trackers[timeRange].comments.inspections)} || Pending Comment Inspections: ${yt(globalState.trackers[timeRange].comments.pendingInspections.length)} ==> [${displayTracker(globalState.trackers[timeRange].comments.pendingInspections)}]`)
-        console.log()
+        console.log('- - - - - - - -')
     }
 }
 
@@ -364,7 +364,7 @@ const ScheduleFlag = async (globalState, operationDetails, type) => {
     })
 
     let avgValue = totalPostValue / postCount
-    if (isNaN(avgValue) || avgValue == null) {
+    if (isNaN(avgValue) || avgValue == null || avgValue === undefined) {
         avgValue = 0.000
     }
 
